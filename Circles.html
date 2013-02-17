@@ -1,0 +1,320 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.js"></script>
+    <script type="text/javascript" src="raphael-min.js"></script>
+
+    <style>
+      body{
+        background: #F1EEEE;
+      }
+    </style>
+
+  </head>
+  <body>
+    <script>
+      var svgElem, svgWidth, svgHeight, circleMatrix;
+      var audioContext, audioVolumeControl, noiseVolumeControl, audioXCoor, audioYCorr;
+      var clickOn = false, broadcastTimer;
+      var MAX_NOISE_GAIN = 0.5;
+      var MAX_AUDIO_GAIN = 5;
+      var COLORS = ['#F25A4C', '#FB2C24', '#8B312C', '#9D175B', '#7D7C82', '#807340', '#C9B82C', '#32A853', '#5F74BC', '#C0C8E4', '#3071FC'];
+      var BOX_WIDTH = 100;
+      var OUTER_CIRCLE_RADIUS = 30;
+      var MAX_INNER_CIRCLE_RADIUS = 25;
+      var MIN_INNER_CIRCLE_RADIUS = 10;
+      var MAX_GROWTH_RADIUS = 52;
+      var COLOR_TIME = 50;
+      var GROWTH_TIME = 300;
+      var RESET_TIME = 2000;
+      var TOP_LEFT = 0, TOP = 1, TOP_RIGHT = 2, RIGHT = 3, BOTTOM_RIGHT = 4, BOTTOM = 5, BOTTOM_LEFT = 6, LEFT = 7;
+
+      function Circle(x, y) {
+        this.x = x;
+        this.y = y;
+        this.innerCircleRadius = (MAX_INNER_CIRCLE_RADIUS - MIN_INNER_CIRCLE_RADIUS) * Math.random() + MIN_INNER_CIRCLE_RADIUS;
+        this.outerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
+        this.innerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
+
+        this.drawCircle();
+        this.setupOnHover();
+        this.setupOnClick();
+      };
+
+      Circle.prototype.setupOnClick = function(){
+          var that = this;
+          this.svgSet.click(function(){
+            clickOn = true;
+            that.pushNeighbours(BOX_WIDTH + OUTER_CIRCLE_RADIUS);
+            that.startBroadcast();
+          });
+      };
+
+      Circle.prototype.setupOnHover = function(){
+          var that = this;
+          that.svgSet.hover(function() {
+            that.outerCircle.stop().animate({stroke: that.outerCircleColor}, COLOR_TIME).animate({r: MAX_GROWTH_RADIUS}, GROWTH_TIME, 'easeIn');
+            that.innerCircle.stop().animate({fill: that.innerCircleColor}, COLOR_TIME).animate({r: OUTER_CIRCLE_RADIUS}, GROWTH_TIME,'easeIn');
+          },
+          function() {
+            that.reset();
+            if(clickOn) that.resetNeighbours();
+          });
+      };
+
+      Circle.prototype.drawCircle = function(){
+        this.outerCircle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS);
+        this.outerCircle.attr({
+          "stroke": "E0DCDC",
+          "stroke-width": 5
+        });
+
+        this.innerCircle = svgElem.circle(this.x, this.y, this.innerCircleRadius);
+        this.innerCircle.attr({
+          stroke: "none",
+          fill: "E0DCDC"
+        });
+
+        hoverArea = svgElem.rect(this.x - BOX_WIDTH/2, this.y-BOX_WIDTH/2, BOX_WIDTH, BOX_WIDTH);
+        hoverArea.attr({stroke: "none",
+                fill:   "#f00",
+                "fill-opacity": 0});
+
+        if(this.x === audioXCoor && this.y === audioYCoor){
+          hoverArea.attr({stroke: "#000"});
+        }
+
+        this.svgSet = svgElem.set();
+        this.svgSet.push(this.outerCircle, this.innerCircle, hoverArea);
+      };
+
+      Circle.prototype.pushNeighbours = function(desiredRadius){
+          var xPos = this.x/BOX_WIDTH - 0.5;
+          var yPos = this.y/BOX_WIDTH - 0.5;
+
+          if(xPos > 0){
+            circleMatrix[xPos - 1][yPos].pushedByNeighbour(this, desiredRadius);
+
+            if(yPos > 0)
+              circleMatrix[xPos - 1][yPos - 1].pushedByNeighbour(this, desiredRadius);
+
+            if(yPos < circleMatrix[xPos - 1].length - 1)
+              circleMatrix[xPos - 1][yPos + 1].pushedByNeighbour(this, desiredRadius);
+          }
+
+          if(xPos < circleMatrix.length - 1){
+            circleMatrix[xPos + 1][yPos].pushedByNeighbour(this, desiredRadius);
+
+            if(yPos > 0)
+              circleMatrix[xPos + 1][yPos - 1].pushedByNeighbour(this, desiredRadius);
+
+            if(yPos < circleMatrix[xPos + 1].length - 1)
+              circleMatrix[xPos +1][yPos + 1].pushedByNeighbour(this, desiredRadius);
+          }
+
+          if(yPos > 0)
+            circleMatrix[xPos][yPos - 1].pushedByNeighbour(this, desiredRadius);
+
+          if(yPos < circleMatrix[xPos].length - 1)
+            circleMatrix[xPos][yPos + 1].pushedByNeighbour(this, desiredRadius);
+      };
+
+      Circle.prototype.pushedByNeighbour = function(neighbour, desiredDistance){
+        var xDistance = this.x - neighbour.x;
+        var yDistance = this.y - neighbour.y;
+
+        var newXDistance = desiredDistance * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119);
+        var newYDistance = desiredDistance * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119);
+
+        var newXCoor = neighbour.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
+        var newYCoor = neighbour.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
+
+        var anim = Raphael.animation({'cx': newXCoor, 'cy': newYCoor}, 300, 'bounce');
+
+        this.svgSet.stop().animate(anim);
+      };
+
+      Circle.prototype.resetNeighbours = function(){
+          var xPos = this.x/BOX_WIDTH - 0.5;
+          var yPos = this.y/BOX_WIDTH - 0.5;
+
+          if(xPos > 0){
+            circleMatrix[xPos - 1][yPos].reset();
+
+            if(yPos > 0)
+              circleMatrix[xPos - 1][yPos - 1].reset();
+
+            if(yPos < circleMatrix[xPos - 1].length - 1)
+              circleMatrix[xPos - 1][yPos + 1].reset();
+          }
+
+          if(xPos < circleMatrix.length - 1){
+            circleMatrix[xPos + 1][yPos].reset();
+
+            if(yPos > 0)
+              circleMatrix[xPos + 1][yPos - 1].reset();
+
+            if(yPos < circleMatrix[xPos + 1].length - 1)
+              circleMatrix[xPos +1][yPos + 1].reset();
+          }
+
+          if(yPos > 0)
+            circleMatrix[xPos][yPos - 1].reset();
+
+          if(yPos < circleMatrix[xPos].length - 1)
+            circleMatrix[xPos][yPos + 1].reset();
+      };
+
+      Circle.prototype.reset = function(){
+        this.outerCircle.stop().animate({
+          r: OUTER_CIRCLE_RADIUS,
+          stroke: '#E0DCDC',
+        }, RESET_TIME);
+
+        this.innerCircle.stop().animate({
+          r: this.innerCircleRadius,
+          fill: "#E0DCDC",
+        }, RESET_TIME);
+
+        this.svgSet.animate({
+          cx: this.x,
+          cy: this.y
+        }, RESET_TIME);
+
+        this.stopBroadcast();
+      };
+
+      Circle.prototype.startBroadcast = function(){
+        var that = this;
+        that.stopBroadcast();
+        that.sendBroadcast();
+        broadcastTimer = setInterval(function(){that.sendBroadcast()}, 700);
+      };
+
+      Circle.prototype.stopBroadcast = function(){
+        clearInterval(broadcastTimer);
+      };
+
+      Circle.prototype.sendBroadcast = function(){
+        var broadcastCircle = svgElem.circle(this.x, this.y, this.outerCircle.attr('r'));
+        broadcastCircle.attr({
+          "stroke": this.outerCircleColor,
+          "stroke-width": 5
+        });
+        broadcastCircle.animate({
+          r: BOX_WIDTH*3,
+          opacity: 0
+        }, 3000);
+      };
+
+      function initSVG(){
+        svgWidth = window.innerWidth;
+        svgHeight = window.innerHeight;
+        svgElem = Raphael(0, 0, svgWidth, svgHeight);
+
+        var randomXCoor = svgWidth*Math.random();
+        var randomYCoor = svgHeight*Math.random();
+        audioXCoor = randomXCoor - (randomXCoor - BOX_WIDTH/2) % BOX_WIDTH;
+        audioYCoor = randomYCoor - (randomYCoor - BOX_WIDTH/2) % BOX_WIDTH;
+        console.log("random audio source coor:", audioXCoor, audioYCoor);
+
+        circleMatrix = new Array(Math.ceil(svgWidth/BOX_WIDTH));
+
+        for(var x = BOX_WIDTH/2; x < svgWidth; x += BOX_WIDTH)
+        {
+          circleMatrix[x/BOX_WIDTH - 0.5] = new Array(Math.ceil(svgHeight/BOX_WIDTH));
+          for(var y = BOX_WIDTH/2; y < svgHeight; y += BOX_WIDTH)
+          {
+            circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5] = new Circle(x, y, svgElem);
+          }
+        }
+      };
+
+      function initAudio(){
+        audioContext = new webkitAudioContext();
+
+        //loadAudio();
+        //loadNoise();
+
+        $('svg').mousemove(function(e){
+            if(audioVolumeControl){
+              audioVolumeControl.gain.value = MAX_AUDIO_GAIN * (1 - Math.abs(e.pageX - audioXCoor)/svgWidth);
+            }
+            if(noiseVolumeControl){
+              noiseVolumeControl.gain.value = MAX_NOISE_GAIN * Math.abs(e.pageY - audioYCoor)/svgHeight;
+            }
+        });
+      };
+
+      function loadAudio(){
+        var request = new XMLHttpRequest();
+        request.open('get',
+          'MLKDream.ogg',
+          true);
+        request.responseType = "arraybuffer";
+
+        request.onload = function() {
+          audioContext.decodeAudioData(
+            request.response,
+            function(incomingBuffer) {
+              playAudio(incomingBuffer); // Not defined yet
+            },
+            function (e) {console.log(e);}
+          );
+        };
+        request.send();
+      };
+
+      function playAudio(buffer) {
+        var source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+
+        audioVolumeControl = audioContext.createGainNode();
+        source.connect(audioVolumeControl);
+        audioVolumeControl.connect(audioContext.destination);
+
+        source.noteOn(0);
+      };
+
+      function loadNoise(){
+        var request = new XMLHttpRequest();
+        request.open('get',
+          'white-noise.mp3',
+          true);
+        request.responseType = "arraybuffer";
+
+        request.onload = function() {
+          audioContext.decodeAudioData(
+            request.response,
+            function(incomingBuffer) {
+              playNoise(incomingBuffer); // Not defined yet
+            },
+            function (e) {console.log(e);}
+          );
+        };
+        request.send();
+      };
+
+      function playNoise(buffer) {
+        var source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+
+        noiseVolumeControl = audioContext.createGainNode();
+        noiseVolumeControl.gain.value = MAX_NOISE_GAIN;
+        source.connect(noiseVolumeControl);
+        noiseVolumeControl.connect(audioContext.destination);
+
+        source.noteOn(0);
+      };
+
+      $(function(){
+        initSVG();
+        initAudio();
+      });
+    </script>
+  </body>
+</html>
