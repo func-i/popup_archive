@@ -55,8 +55,9 @@
       Circle.prototype.setupOnHover = function(){
           var that = this;
           that.svgSet.hover(function() {
-            that.outerCircle.stop().animate({stroke: that.outerCircleColor}, COLOR_TIME).animate({r: MAX_GROWTH_RADIUS}, GROWTH_TIME, 'easeIn');
-            that.innerCircle.stop().animate({fill: that.innerCircleColor}, COLOR_TIME).animate({r: OUTER_CIRCLE_RADIUS}, GROWTH_TIME,'easeIn');
+            that.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS}, GROWTH_TIME, 'easeIn');
+            that.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS}, GROWTH_TIME,'easeIn');
+            that.colorOn();
           },
           function() {
             that.reset();
@@ -88,6 +89,16 @@
 
         this.svgSet = svgElem.set();
         this.svgSet.push(this.outerCircle, this.innerCircle, hoverArea);
+      };
+
+      Circle.prototype.colorOn = function(){
+        this.outerCircle.animate({stroke: this.outerCircleColor}, COLOR_TIME);
+        this.innerCircle.animate({fill: this.innerCircleColor}, COLOR_TIME);
+      };
+
+      Circle.prototype.colorOff = function(){
+        this.outerCircle.animate({stroke: '#E0DCDC'}, RESET_TIME);
+        this.innerCircle.animate({fill: "#E0DCDC"}, RESET_TIME);
       };
 
       Circle.prototype.pushNeighbours = function(desiredRadius){
@@ -134,6 +145,7 @@
         var anim = Raphael.animation({'cx': newXCoor, 'cy': newYCoor}, 300, 'bounce');
 
         this.svgSet.stop().animate(anim);
+        this.colorOff();
       };
 
       Circle.prototype.resetNeighbours = function(){
@@ -168,15 +180,9 @@
       };
 
       Circle.prototype.reset = function(){
-        this.outerCircle.stop().animate({
-          r: OUTER_CIRCLE_RADIUS,
-          stroke: '#E0DCDC',
-        }, RESET_TIME);
-
-        this.innerCircle.stop().animate({
-          r: this.innerCircleRadius,
-          fill: "#E0DCDC",
-        }, RESET_TIME);
+        this.outerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS}, RESET_TIME);
+        this.innerCircle.stop().animate({r: this.innerCircleRadius}, RESET_TIME);
+        this.colorOff();
 
         this.svgSet.animate({
           cx: this.x,
@@ -198,7 +204,7 @@
       };
 
       Circle.prototype.sendBroadcast = function(){
-        var broadcastCircle = svgElem.circle(this.x, this.y, this.outerCircle.attr('r'));
+        var broadcastCircle = svgElem.circle(this.outerCircle.attr('cx'), this.outerCircle.attr('cy'), this.outerCircle.attr('r'));
         broadcastCircle.attr({
           "stroke": this.outerCircleColor,
           "stroke-width": 5
@@ -206,7 +212,9 @@
         broadcastCircle.animate({
           r: BOX_WIDTH*3,
           opacity: 0
-        }, 3000);
+        }, 3000, function(){
+          this.remove();
+        });
       };
 
       function initSVG(){
