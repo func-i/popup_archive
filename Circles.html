@@ -91,14 +91,15 @@
         this.svgSet.push(this.outerCircle, this.innerCircle, hoverArea);
       };
 
-      Circle.prototype.colorOn = function(){
-        this.outerCircle.animate({stroke: this.outerCircleColor}, COLOR_TIME);
-        this.innerCircle.animate({fill: this.innerCircleColor}, COLOR_TIME);
+      Circle.prototype.colorOn = function(opacity){
+        opacity = opacity || 1;
+        this.outerCircle.animate({stroke: this.outerCircleColor, 'opacity': opacity}, COLOR_TIME);
+        this.innerCircle.animate({fill: this.innerCircleColor, 'opacity': opacity}, COLOR_TIME);
       };
 
       Circle.prototype.colorOff = function(){
-        this.outerCircle.animate({stroke: '#E0DCDC'}, RESET_TIME);
-        this.innerCircle.animate({fill: "#E0DCDC"}, RESET_TIME);
+        this.outerCircle.animate({stroke: '#E0DCDC', 'opacity': 1}, RESET_TIME);
+        this.innerCircle.animate({fill: "#E0DCDC", 'opacity': 1}, RESET_TIME);
       };
 
       Circle.prototype.pushNeighbours = function(desiredRadius){
@@ -142,10 +143,10 @@
         var newXCoor = neighbour.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
         var newYCoor = neighbour.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
 
-        var anim = Raphael.animation({'cx': newXCoor, 'cy': newYCoor}, 300, 'bounce');
-
+        var anim = Raphael.animation({'cx': newXCoor, 'cy': newYCoor}, 1000, 'bounce');
         this.svgSet.stop().animate(anim);
-        this.colorOff();
+
+        this.colorOn(0.2);
       };
 
       Circle.prototype.resetNeighbours = function(){
@@ -207,7 +208,7 @@
         var broadcastCircle = svgElem.circle(this.outerCircle.attr('cx'), this.outerCircle.attr('cy'), this.outerCircle.attr('r'));
         broadcastCircle.attr({
           "stroke": this.outerCircleColor,
-          "stroke-width": 5
+          "stroke-width": 1
         });
         broadcastCircle.animate({
           r: BOX_WIDTH*3,
