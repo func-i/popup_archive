@@ -1,0 +1,157 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.js"></script>
+    <script type="text/javascript" src="raphael-min.js"></script>
+
+    <style>
+      body{
+        background: #F1EEEE;
+      }
+    </style>
+
+  </head>
+  <body>
+    <script>
+var svgElem, svgWidth, svgHeight, circleMatrix;
+var audioContext, audioVolumeControl, noiseVolumeControl, audioXCoor, audioYCorr;
+var MAX_NOISE_GAIN = 0.5;
+var MAX_AUDIO_GAIN = 1;
+var COLORS = ['#F25A4C', '#FB2C24', '#8B312C', '#9D175B', '#7D7C82', '#807340', '#C9B82C', '#32A853', '#5F74BC', '#C0C8E4', '#3071FC'];
+var BOX_WIDTH = 100;
+var OUTER_CIRCLE_RADIUS = 30;
+var OUTER_CIRCLE_STROKE_WIDTH = 5;
+var MAX_INNER_CIRCLE_RADIUS = 25;
+var MIN_INNER_CIRCLE_RADIUS = 10;
+var MAX_GROWTH_RADIUS = 52;
+var CLICK_DECREASE_IN_RADIUS= 10;
+var COLOR_TIME = 50;
+var GROWTH_TIME = 300;
+var RESET_TIME = 2000;
+var CLICK_TIME = 100;
+var BROADCAST_FREQUENCY = 700;
+var BROADCAST_STROKE_WIDTH = 2;
+var BROADCAST_TIME = 3000;
+var MAX_BROADCAST_RADIUS_IN_BOX_WIDTHS = 3;
+var BROADCAST_NEIGHBOUR_OPACITY = 0.4;
+var BROADCAST_NEIGHBOUR_MOVE_TIME = 1000;
+
+function initSVG(){
+  svgWidth = window.innerWidth;
+  svgHeight = window.innerHeight;
+  svgElem = Raphael(0, 0, svgWidth, svgHeight);
+
+  var randomXCoor = svgWidth*Math.random();
+  var randomYCoor = svgHeight*Math.random();
+  audioXCoor = randomXCoor - (randomXCoor - BOX_WIDTH/2) % BOX_WIDTH;
+  audioYCoor = randomYCoor - (randomYCoor - BOX_WIDTH/2) % BOX_WIDTH;
+  console.log("random audio source coor:", audioXCoor, audioYCoor);
+
+  circleMatrix = new Array(Math.ceil(svgWidth/BOX_WIDTH));
+
+  for(var x = BOX_WIDTH/2; x < svgWidth; x += BOX_WIDTH)
+  {
+    circleMatrix[x/BOX_WIDTH - 0.5] = new Array(Math.ceil(svgHeight/BOX_WIDTH));
+    for(var y = BOX_WIDTH/2; y < svgHeight; y += BOX_WIDTH)
+    {
+
+      if(audioXCoor == x && audioYCoor == y)
+        circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5] = new AudioSourceCircle(x, y, svgElem);
+      else
+        circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5] = new Circle(x, y, svgElem);
+
+      circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5].init();
+    }
+  }
+};
+
+function initAudio(){
+  audioContext = new webkitAudioContext();
+
+  loadAudio();
+  loadNoise();
+
+  $('svg').mousemove(function(e){
+      if(audioVolumeControl){
+        audioVolumeControl.gain.value = MAX_AUDIO_GAIN * (1 - Math.abs(e.pageX - audioXCoor)/svgWidth);
+      }
+      if(noiseVolumeControl){
+        noiseVolumeControl.gain.value = MAX_NOISE_GAIN * Math.abs(e.pageY - audioYCoor)/svgHeight;
+      }
+  });
+};
+
+function loadAudio(){
+  var request = new XMLHttpRequest();
+  request.open('get',
+    'MLKDream.ogg',
+    true);
+  request.responseType = "arraybuffer";
+
+  request.onload = function() {
+    audioContext.decodeAudioData(
+      request.response,
+      function(incomingBuffer) {
+        playAudio(incomingBuffer); // Not defined yet
+      },
+      function (e) {console.log(e);}
+    );
+  };
+  request.send();
+};
+
+function playAudio(buffer) {
+  var source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  audioVolumeControl = audioContext.createGainNode();
+  source.connect(audioVolumeControl);
+  audioVolumeControl.connect(audioContext.destination);
+
+  source.noteOn(0);
+};
+
+function loadNoise(){
+  var request = new XMLHttpRequest();
+  request.open('get',
+    'white-noise.ogg',
+    true);
+  request.responseType = "arraybuffer";
+
+  request.onload = function() {
+    audioContext.decodeAudioData(
+      request.response,
+      function(incomingBuffer) {
+        playNoise(incomingBuffer); // Not defined yet
+      },
+      function (e) {console.log(e);}
+    );
+  };
+  request.send();
+};
+
+function playNoise(buffer) {
+  var source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  noiseVolumeControl = audioContext.createGainNode();
+  noiseVolumeControl.gain.value = MAX_NOISE_GAIN;
+  source.connect(noiseVolumeControl);
+  noiseVolumeControl.connect(audioContext.destination);
+
+  source.noteOn(0);
+};
+
+$(function(){
+  initSVG();
+  initAudio();
+});
+    </script>
+    <script type="text/javascript" src="circle.js"></script>
+
+  </body>
+</html>
