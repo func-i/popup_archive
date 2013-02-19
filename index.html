@@ -33,7 +33,7 @@ var RESET_TIME = 2000;
 var CLICK_TIME = 100;
 var BROADCAST_FREQUENCY = 700;
 var BROADCAST_STROKE_WIDTH = 2;
-var BROADCAST_TIME = 3000;
+var BROADCAST_TIME_PER_BOX = 3000;
 var MAX_BROADCAST_RADIUS_IN_BOX_WIDTHS = 3;
 var BROADCAST_NEIGHBOUR_OPACITY = 0.4;
 var BROADCAST_NEIGHBOUR_MOVE_TIME = 1000;
@@ -71,7 +71,7 @@ function initAudio(){
   audioContext = new webkitAudioContext();
 
   loadAudio();
-  loadNoise();
+  //loadNoise();
 
   $('svg').mousemove(function(e){
       if(audioVolumeControl){
