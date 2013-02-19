@@ -18,17 +18,39 @@
         right: 0;
         bottom: 0;
       }
+      .page{
+        display: none;
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+      }
+      .container{
+        width: 600px;
+        margin-left: 200px;
+        margin-top: 100px;
+      }
     </style>
 
   </head>
   <body>
     <div id="svg_container"></div>
+
+    <div class="page" id="page_one">
+      <div class="container">
+        <h1>Journalists, broadcasters, & producers</h1>
+        <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+      </div>
+    </div>
+
     <script>
 
 var audioContext, audioVolumeControl, noiseVolumeControl;
 var MAX_NOISE_GAIN = 0.5;
 var MAX_AUDIO_GAIN = 1;
 var COLORS = ['#F25A4C', '#FB2C24', '#8B312C', '#9D175B', '#7D7C82', '#807340', '#C9B82C', '#32A853', '#5F74BC', '#C0C8E4', '#3071FC'];
+var CONNECT_COLOR = "#C9B82C";
 var BOX_WIDTH = 100;
 var OUTER_CIRCLE_RADIUS = 30;
 var OUTER_CIRCLE_STROKE_WIDTH = 5;
@@ -40,6 +62,7 @@ var COLOR_TIME = 50;
 var GROWTH_TIME = 300;
 var RESET_TIME = 2000;
 var CLICK_TIME = 100;
+var CONNECT_TIME = 1000;
 var BROADCAST_FREQUENCY = 700;
 var BROADCAST_STROKE_WIDTH = 2;
 var BROADCAST_TIME_PER_BOX = 3000;

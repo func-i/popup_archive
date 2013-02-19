@@ -10,6 +10,21 @@ Raphael.fn.arrow = function (x, y, length, height, width) {
   );
 };
 
+/*Raphael.customAttributes.arc = function (value, total, R) {
+  var alpha = 360 / total * value,
+  a = (90 - alpha) * Math.PI / 180,
+                        x = 300 + R * Math.cos(a),
+                        y = 300 - R * Math.sin(a),
+                        color = "hsb(".concat(Math.round(R) / 200, ",", value / total, ", .75)"),
+                        path;
+                    if (total == value) {
+                        path = [["M", 300, 300 - R], ["A", R, R, 0, 1, 1, 299.99, 300 - R]];
+                    } else {
+                        path = [["M", 300, 300 - R], ["A", R, R, 0, +(alpha > 180), 1, x, y]];
+                    }
+                    return {path: path, stroke: color};
+                };*/
+
 function Circle(x, y, svgEl) {
   this.x = x;
   this.y = y;
@@ -112,6 +127,71 @@ Circle.prototype.colorOff = function(delay){
   this.innerCircle.animate(innerAnim.delay(delay));
 
   this.isColorOn = false;
+};
+
+Circle.prototype.connectNeighbourWithArc = function(neighbour){
+  var path =svgElem.path("M" + this.x + " " + this.y);
+  path.attr('stroke', CONNECT_COLOR);
+
+  neighbour.innerCircle.toFront();
+  this.innerCircle.toFront();
+
+  this.colorOn();
+
+  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour])
+
+  var curveString =
+    "M" + this.x + " " + this.y +
+    "S" + (this.x + neighbour.x)/2 + " " + Math.floor((this.y + neighbour.y)/2 + (this.y - neighbour.y)/2*Math.random()) + " " + neighbour.x + " " + neighbour.y;
+  path.animate({path: curveString}, CONNECT_TIME, function(){
+    (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, neighbour])
+    neighbour.colorOn();
+  });
+};
+
+Circle.prototype.connectNeighbourWithLine = function(neighbour){
+  var path =svgElem.path("M" + this.x + " " + this.y);
+  path.attr('stroke', CONNECT_COLOR);
+
+  neighbour.innerCircle.toFront();
+  this.innerCircle.toFront();
+
+  this.colorOn();
+
+  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour])
+
+  var lineString =
+    "M" + this.x + " " + this.y +
+    "L" + neighbour.x + " " + neighbour.y;
+  var that = this;
+  path.animate({path: lineString}, CONNECT_TIME, function(){
+    (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, this])
+    neighbour.colorOn();
+  });
+};
+
+Circle.prototype.removeConnectedPaths = function(){
+  $.each(this.connectedPaths, function(i, pathArr)
+  {
+    if(pathArr[1].connectedPaths.length == 1){
+      pathArr[1].colorOff();
+    }
+
+    pathArr[0].animate({opacity: 0}, RESET_TIME, function(){
+      this.remove();
+
+      var indexOf;
+      $.each(pathArr[1].connectedPaths, function(index, neighbourPathArr){
+        if(neighbourPathArr[0] == pathArr[0])
+          indexOf = index;
+      });
+      pathArr[1].connectedPaths.splice(indexOf, 1);
+    });
+  });
+
+  this.colorOff();
+
+  this.connectedPaths = [];
 };
 
 Circle.prototype.pushNeighbours = function(desiredRadius){
