@@ -1,5 +1,15 @@
 var svgElem;
 
+Raphael.fn.arrow = function (x, y, length, height, width) {
+  return this.path(
+    "M" + x + " " + y +
+    "L" + (x - length) + " " + (y - height/2) +
+    "L" + (x - width) + " " + y +
+    "L" + (x - length) + " " + (y + height /2) +
+    "L" + x  + " " + y
+  );
+};
+
 function Circle(x, y, svgEl) {
   this.x = x;
   this.y = y;
@@ -15,6 +25,10 @@ Circle.prototype.init = function(){
 
   this.outerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
   this.innerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
+};
+
+Circle.prototype.hide = function(){
+  this.svgSet.hide();
 };
 
 Circle.prototype.setupOnClick = function(){
@@ -84,7 +98,7 @@ Circle.prototype.colorOn = function(opacity, delay){
   var innerAnim = Raphael.animation({fill: this.innerCircleColor, 'opacity': opacity}, COLOR_TIME);
   this.innerCircle.animate(innerAnim.delay(delay));
 
-  this.svgSet.toFront();
+//  this.svgSet.toFront();
 
   this.isColorOn = true;
 };
@@ -101,7 +115,8 @@ Circle.prototype.colorOff = function(delay){
 };
 
 Circle.prototype.pushNeighbours = function(desiredRadius){
-  this.callOnNeighbours(1, this.pushed, this, desiredRadius);
+  var that = this;
+  this.callOnNeighbours(1, function(){ this.pushed(that, desiredRadius)});
 };
 
 Circle.prototype.pushed = function(pusher, desiredDistance){
@@ -121,7 +136,7 @@ Circle.prototype.pushed = function(pusher, desiredDistance){
 };
 
 Circle.prototype.resetNeighbours = function(){
-    this.callOnNeighbours(3, this.reset);
+    this.callOnNeighbours(3, function(){this.reset()});
 };
 
 Circle.prototype.reset = function(){
@@ -145,8 +160,8 @@ Circle.prototype.startBroadcast = function(numberOfNeighbours, opacity){
 
   var that = this;
   that.stopBroadcast();
-  that.sendBroadcast(numberOfNeighbours, opacity);
-  that.broadcastTimer = setInterval(function(){that.sendBroadcast(numberOfNeighbours, opacity)}, BROADCAST_FREQUENCY);
+  //that.sendBroadcast(numberOfNeighbours, opacity);
+  //that.broadcastTimer = setInterval(function(){that.sendBroadcast(numberOfNeighbours, opacity)}, BROADCAST_FREQUENCY);
 };
 
 Circle.prototype.stopBroadcast = function(){
@@ -172,7 +187,10 @@ Circle.prototype.sendBroadcast = function(numberOfNeighbours, opacity){
     this.remove();
   });
 
-  this.callOnNeighbours(2, this.setDelayedAnimationFromBroadcast, this);
+  var that = this;
+  this.callOnNeighbours(2, function(){
+    this.setDelayedAnimationFromBroadcast(that)
+  });
 };
 
 
@@ -211,7 +229,7 @@ Circle.prototype.callOnNeighbours = function(maxDegreesOfSeperation, functionToC
     if(xIndex + xLevel < 0 || xIndex + xLevel > circleMatrix.length - 1 || typeof circleMatrix[xIndex + xLevel] == 'undefined') continue;
 
     for(var yLevel = -maxDegreesOfSeperation; yLevel <= maxDegreesOfSeperation; yLevel++){
-      if(yIndex + yLevel < 0 || yIndex + yLevel > circleMatrix[xIndex + xLevel].length - 1) continue;
+      if(yIndex + yLevel < 0 || yIndex + yLevel > circleMatrix[xIndex + xLevel].length - 1 || typeof circleMatrix[xIndex + xLevel][yIndex + yLevel] == 'undefined') continue;
 
       if(xLevel == 0 && yLevel == 0) continue;
 
@@ -322,6 +340,17 @@ AudioSourceCircle.prototype.draw = function(){
   this.svgSet.push(hoverArea);
   this.normalSet.push(hoverArea);
   this.onHoverSet.push(hoverArea);
+
+  this.arrowSet = svgElem.set();
+  var arrow = svgElem.arrow(this.x + BOX_WIDTH - 10, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
+  this.arrowSet.push(arrow);
+  this.svgSet.push(arrow);
+
+  arrow = svgElem.arrow(this.x + BOX_WIDTH - 25, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
+  this.arrowSet.push(arrow);
+  this.svgSet.push(arrow);
+
+  this.svgSet.attr({cursor: "pointer"});
 };
 
 AudioSourceCircle.prototype.currentOuterRadius = function(){
@@ -335,12 +364,8 @@ AudioSourceCircle.prototype.setupOnHover = function(){
   var that = this;
 
   this.svgSet.hover(function(){
-    that.normalSet.hide();
-    that.onHoverSet.show();
-
-    that.colorOn();
-
-    that.startBroadcast(3, 0.7);
+   // that.onMouseEnter();
+   that.onClick();
   },
   function(){
     if(that.clickOn) that.resetNeighbours();
@@ -351,10 +376,29 @@ AudioSourceCircle.prototype.setupOnHover = function(){
 AudioSourceCircle.prototype.setupOnClick = function(){
     var that = this;
     this.svgSet.click(function(){
-      that.clickOn = true;
-      that.innerCircle.stop().animate({r: that.innerCircleRadius - CLICK_DECREASE_IN_RADIUS}, CLICK_TIME);
-      that.pushNeighbours(BOX_WIDTH + OUTER_CIRCLE_RADIUS);
+      that.onClick();
     });
+};
+
+AudioSourceCircle.prototype.onClick = function(){
+  this.onMouseEnter();
+
+  this.clickOn = true;
+//  this.innerCircle.stop().animate({r: this.innerCircleRadius - CLICK_DECREASE_IN_RADIUS}, CLICK_TIME);
+  this.arrowSet.stop().animate({opacity: 1}, BROADCAST_NEIGHBOUR_MOVE_TIME);
+
+  this.pushNeighbours(BOX_WIDTH + OUTER_CIRCLE_RADIUS);
+};
+
+AudioSourceCircle.prototype.onMouseEnter = function(){
+  this.normalSet.hide();
+  this.onHoverSet.show();
+
+  this.svgSet.stop();
+
+  this.colorOn();
+
+  this.startBroadcast(3, 0.7);
 };
 
 AudioSourceCircle.prototype.reset = function(){
@@ -362,6 +406,7 @@ AudioSourceCircle.prototype.reset = function(){
   this.normalSet.show();
 
   this.innerCircle.stop().animate({r: this.innerCircleRadius}, RESET_TIME);
+  this.arrowSet.stop().animate({opacity: 0}, RESET_TIME, 'ease-out');
   this.colorOff();
 
   this.svgSet.animate({
