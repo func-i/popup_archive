@@ -133,8 +133,8 @@ Circle.prototype.grow = function(scale, growthTime){
   scale = scale || 1;
   growthTime = growthTime || GROWTH_TIME;
 
-  this.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS*scale}, growthTime, 'easeIn');
-  this.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS*scale}, growthTime,'easeIn');
+  this.outerCircle.stop().toFront().animate({r: MAX_GROWTH_RADIUS*scale}, growthTime, 'easeIn');
+  this.innerCircle.stop().toFront().animate({r: OUTER_CIRCLE_RADIUS*scale}, growthTime,'easeIn');
   this.colorOn();
 };
 
@@ -337,14 +337,15 @@ Circle.prototype.reset = function(scaleFactor){
   this.removeConnectedPaths();
 };
 
-Circle.prototype.startBroadcast = function(numberOfNeighbours, opacity){
+Circle.prototype.startBroadcast = function(numberOfNeighbours, opacity, broadcastFrequency){
   numberOfNeighbours = numberOfNeighbours || MAX_BROADCAST_RADIUS_IN_BOX_WIDTHS;
   opacity = opacity || 1;
+  broadcastFrequency = broadcastFrequency || BROADCAST_FREQUENCY;
 
   var that = this;
   that.stopBroadcast();
-  //that.sendBroadcast(numberOfNeighbours, opacity);
-  //that.broadcastTimer = setInterval(function(){that.sendBroadcast(numberOfNeighbours, opacity)}, BROADCAST_FREQUENCY);
+  that.sendBroadcast(numberOfNeighbours, opacity);
+  that.broadcastTimer = setInterval(function(){that.sendBroadcast(numberOfNeighbours, opacity)}, broadcastFrequency);
 };
 
 Circle.prototype.stopBroadcast = function(){
@@ -468,8 +469,6 @@ AudioSourceCircle.prototype.init = function(){
 
   this.outerCircleColor = COLORS[1];
   this.innerCircleColor = COLORS[1];
-
-  this.startBroadcast(1, 0.7);
 };
 
 AudioSourceCircle.prototype.draw = function(){

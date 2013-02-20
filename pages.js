@@ -58,16 +58,12 @@ function loadMainPage(){
 };
 
 var pathQueue;
+var pageOneIntervalTimer;
 function loadPageOne(){
-  hideAudioSourceCircle();
-
-  hoverHandlerOn = false;
-  clickHandlerOn = false;
+  resetNonAudioPages();
 
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
-      circleMatrix[x][y].reset();
-
       var blur = 5 * ($('#page_one .container').width() - x*BOX_WIDTH) / $('#page_one .container').width();
       if(blur > 0)
         circleMatrix[x][y].blur(blur);
@@ -76,7 +72,7 @@ function loadPageOne(){
 
   //Choose a random circle
   pathQueue = [];
-  setInterval(connectRandomCircle, 2000);
+  pageOneIntervalTimer = setInterval(connectRandomCircle, 2000);
 };
 
 function connectRandomCircle(){
@@ -111,20 +107,13 @@ function connectRandomCircle(){
 };
 
 var bubbleArray;
+var pageTwoIntervalTimer;
 function loadPageTwo(){
-  hideAudioSourceCircle();
-
-  hoverHandlerOn = false;
-  clickHandlerOn = false;
-
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      circleMatrix[x][y].reset(0.5);
-    }
+  resetNonAudioPages();
 
   //Bubble from bottom to top
   bubbleArray = new Array(circleMatrix.length);
-  setInterval(bubbleToTop, 500);
+  pageTwoIntervalTimer = setInterval(bubbleToTop, 500);
 };
 
 function bubbleToTop(){
@@ -162,10 +151,73 @@ function bubbleToTop(){
 };
 
 function loadPageThree(){
+  resetNonAudioPages();
+
+  circleMatrix[4][4].grow(3, 1500);
+  circleMatrix[4][4].callOnNeighbours(1, function(){
+    this.innerCircle.stop().animate({'opacity': 0}, 1500);
+    this.outerCircle.stop().animate({'opacity': 0}, 1500);
+  });
+  circleMatrix[4][4].startBroadcast(1, 0.7, 1000);
+
+  circleMatrix[9][2].grow(3, 1500);
+  circleMatrix[9][2].callOnNeighbours(1, function(){
+    this.innerCircle.stop().animate({'opacity': 0}, 1500);
+    this.outerCircle.stop().animate({'opacity': 0}, 1500);
+  });
+  circleMatrix[9][2].startBroadcast(1, 0.7, 1000);
 };
+
+var currentColoredColumnIndex;
+var pageFourIntervalTimer;
+function loadPageFour(){
+  resetNonAudioPages();
+
+  currentColoredColumnIndex = undefined;
+  pageFourIntervalTimer = setInterval(colorColumn, 1500);
+};
+
+function colorColumn(){
+  if(typeof currentColoredColumnIndex != 'undefined'){
+    for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
+      circleMatrix[currentColoredColumnIndex][y].colorOff();
+    }
+
+    currentColoredColumnIndex = currentColoredColumnIndex + 1
+  }
+
+  if(typeof currentColoredColumnIndex == 'undefined' || currentColoredColumnIndex >= circleMatrix.length)
+    currentColoredColumnIndex = 0;
+
+  for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
+    if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined' && circleMatrix[currentColoredColumnIndex][y].isVisible())
+      circleMatrix[currentColoredColumnIndex][y].colorOn();
+  }
+};
+
+function resetNonAudioPages(){
+  cancelAllTimers();
+
+  hideAudioSourceCircle();
+
+  hoverHandlerOn = false;
+  clickHandlerOn = false;
+
+  for(var x = 0; x < circleMatrix.length; x++)
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      circleMatrix[x][y].reset();
+    }
+};
+
+function cancelAllTimers(){
+  clearInterval(pageOneIntervalTimer);
+  clearInterval(pageTwoIntervalTimer);
+  clearInterval(pageFourIntervalTimer);
+}
 
 function hideAudioSourceCircle(){
   audioSourceCircle.hide();
+  audioSourceCircle.stopBroadcast();
 
   if(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle){
     circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
@@ -175,6 +227,7 @@ function hideAudioSourceCircle(){
 
 function showAudioSourceCircle(){
   audioSourceCircle.show();
+  audioSourceCircle.startBroadcast(1, 0.7);
 
   if(!(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle)){
     circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].remove();
