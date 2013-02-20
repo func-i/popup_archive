@@ -209,6 +209,8 @@ function colorColumn(){
 };
 
 var swappedInnerRadiuses;
+var pageFiveIntervalTimer;
+
 function loadPageFive(){
   hideAudioSourceCircle();
 
@@ -227,7 +229,61 @@ function loadPageFive(){
 
   setRandomColors();
   resetNonAudioPages();
+
+  //returnSwappedRadiuses();
+  pageFiveIntervalTimer = setTimeout(returnSwappedRadiuses, 5000);
 };
+
+function returnSwappedRadiuses(){
+  if(swappedInnerRadiuses.length == 0) return;
+
+  var randomIndex = Math.floor(swappedInnerRadiuses.length*Math.random());
+  var swappedRadiuses = swappedInnerRadiuses[randomIndex];
+
+  var circle1 = swappedRadiuses[0];
+  var circle2 = swappedRadiuses[1];
+
+  var circle1Radius = circle1.currentInnerRadius();
+  var circle2Radius = circle2.currentInnerRadius();
+
+  var circle1Fill = circle1.innerCircleColor;
+  var circle2Fill = circle2.innerCircleColor;
+
+  circle1.colorOn();
+  circle2.colorOn();
+
+  circle1.innerCircle.animate({opacity: 0}, 2000, function(){
+    circle1.innerCircle.attr({
+      r: circle2Radius,
+      fill: circle2Fill
+    });
+
+    var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
+      circle1.colorOff();
+    });
+
+    circle1.innerCircle.animate(swapAnim.delay(2000));
+  });
+
+  circle2.innerCircle.animate({opacity: 0}, 2000, function(){
+    circle2.innerCircle.attr({
+      r: circle1Radius,
+      fill: circle1Fill
+    });
+
+    var swapAnim = Raphael.animation({
+      opacity: 1
+    }, 1000, function(){
+      circle2.colorOff();
+    })
+
+    circle2.innerCircle.animate(swapAnim.delay(2000));
+  });
+
+  swappedInnerRadiuses.splice(randomIndex, 1);
+
+  pageFiveIntervalTimer = setTimeout(returnSwappedRadiuses, 7000);
+}
 
 function swapRandomInnerRadiuses(){
   swappedInnerRadiuses = [];
@@ -245,7 +301,7 @@ function swapRandomInnerRadiuses(){
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
     firstSectionRandomCircle.setInnerRadius(25);
     secondSectionRandomCircle.setInnerRadius(10);
-    swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle, 10, 25]);
+    swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
   for(var i = 0; i < 3; i++){
@@ -253,7 +309,7 @@ function swapRandomInnerRadiuses(){
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
     firstSectionRandomCircle.setInnerRadius(17);
     thirdSectionRandomCircle.setInnerRadius(10);
-    swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle, 10, 17]);
+    swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
   for(var i = 0; i < 3; i++){
@@ -261,7 +317,7 @@ function swapRandomInnerRadiuses(){
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
     secondSectionRandomCircle.setInnerRadius(17);
     thirdSectionRandomCircle.setInnerRadius(25);
-    swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle, 25, 17]);
+    swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle]);
   }
 };
 
