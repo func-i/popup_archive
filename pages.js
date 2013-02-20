@@ -332,6 +332,46 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
     }
 };
 
+function loadPageSix(){
+};
+
+function loadPageSeven(){
+  resetNonAudioPages();
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    var hideHeight, innerColor, outerColor;
+    if(x < Math.floor(circleMatrix.length/3)){
+      hideHeight = 4;
+      innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+      outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+      delay = 2000;
+    }
+    else if(x < 2*Math.floor(circleMatrix.length/3)){
+      hideHeight = 2;
+      innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+      outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+      delay = 8000;
+    }
+    else{
+      hideHeight = 0;
+      innerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+      outerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+      delay = 14000;
+    }
+
+    for(var y = 0; y < hideHeight; y++)
+      circleMatrix[x][y].hide();
+
+    if(hideHeight == circleMatrix[x].length)
+      continue;
+
+    circleMatrix[x][hideHeight].setInnerColor(innerColor);
+    circleMatrix[x][hideHeight].setOuterColor(outerColor);
+
+    circleMatrix[x][hideHeight].colorOn(1, delay);
+  }
+};
+
 
 function resetNonAudioPages(){
   cancelAllTimers();
