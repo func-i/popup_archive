@@ -46,9 +46,21 @@ Circle.prototype.hide = function(){
   this.svgSet.hide();
 };
 
+Circle.prototype.show = function(){
+  this.svgSet.show();
+  this.reset();
+};
+
+Circle.prototype.remove = function(){
+  this.svgSet.remove();
+  delete this;
+};
+
 Circle.prototype.setupOnClick = function(){
     var that = this;
     this.svgSet.click(function(){
+      if(!clickHandlerOn) return
+
       that.clickOn = true;
       that.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS - CLICK_DECREASE_IN_RADIUS}, CLICK_TIME);
       that.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS - CLICK_DECREASE_IN_RADIUS}, CLICK_TIME);
@@ -60,11 +72,15 @@ Circle.prototype.setupOnClick = function(){
 Circle.prototype.setupOnHover = function(){
     var that = this;
     that.svgSet.hover(function() {
+      if(!hoverHandlerOn) return
+
       that.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS}, GROWTH_TIME, 'easeIn');
       that.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS}, GROWTH_TIME,'easeIn');
       that.colorOn();
     },
     function() {
+      if(!hoverHandlerOn) return
+
       if(that.clickOn) that.resetNeighbours();
       that.reset();
     });
@@ -138,15 +154,17 @@ Circle.prototype.connectNeighbourWithArc = function(neighbour){
 
   this.colorOn();
 
-  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour])
-
   var curveString =
     "M" + this.x + " " + this.y +
     "S" + (this.x + neighbour.x)/2 + " " + Math.floor((this.y + neighbour.y)/2 + (this.y - neighbour.y)/2*Math.random()) + " " + neighbour.x + " " + neighbour.y;
   path.animate({path: curveString}, CONNECT_TIME, function(){
-    (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, neighbour])
     neighbour.colorOn();
   });
+
+  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour]);
+  (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, this]);
+
+  return path;
 };
 
 Circle.prototype.connectNeighbourWithLine = function(neighbour){
@@ -158,40 +176,57 @@ Circle.prototype.connectNeighbourWithLine = function(neighbour){
 
   this.colorOn();
 
-  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour])
-
   var lineString =
     "M" + this.x + " " + this.y +
     "L" + neighbour.x + " " + neighbour.y;
-  var that = this;
   path.animate({path: lineString}, CONNECT_TIME, function(){
-    (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, this])
     neighbour.colorOn();
   });
+
+  (this.connectedPaths = this.connectedPaths || []).push([path, neighbour]);
+  (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, this]);
+
+  return path;
 };
 
 Circle.prototype.removeConnectedPaths = function(){
+  var that = this;
   $.each(this.connectedPaths, function(i, pathArr)
   {
-    if(pathArr[1].connectedPaths.length == 1){
-      pathArr[1].colorOff();
-    }
-
-    pathArr[0].animate({opacity: 0}, RESET_TIME, function(){
-      this.remove();
-
-      var indexOf;
-      $.each(pathArr[1].connectedPaths, function(index, neighbourPathArr){
-        if(neighbourPathArr[0] == pathArr[0])
-          indexOf = index;
-      });
-      pathArr[1].connectedPaths.splice(indexOf, 1);
-    });
+    that.removePath(pathArr[0], pathArr[1]);
   });
 
   this.colorOff();
 
   this.connectedPaths = [];
+};
+
+Circle.prototype.removePath = function(neighbour, path){
+  if(neighbour.connectedPaths.length == 1){
+    neighbour.colorOff();
+  }
+
+  if(this.connectedPaths.length == 1){
+    this.colorOff();
+  }
+
+  path.animate({opacity: 0}, RESET_TIME);
+
+  var indexOf;
+  $.each(this.connectedPaths, function(index, pathArr){
+    if(pathArr[0] == path)
+      indexOf = index;
+  });
+  this.connectedPaths.splice(indexOf, 1);
+
+  indexOf = null;
+  $.each(neighbour.connectedPaths, function(index, neighbourPathArr){
+    if(neighbourPathArr[0] == path)
+      indexOf = index;
+  });
+  neighbour.connectedPaths.splice(indexOf, 1);
+
+  path.remove();
 };
 
 Circle.prototype.pushNeighbours = function(desiredRadius){
@@ -444,10 +479,14 @@ AudioSourceCircle.prototype.setupOnHover = function(){
   var that = this;
 
   this.svgSet.hover(function(){
+   if(!hoverHandlerOn) return
+
    // that.onMouseEnter();
    that.onClick();
   },
   function(){
+    if(!hoverHandlerOn) return
+
     if(that.clickOn) that.resetNeighbours();
     that.reset();
   });
@@ -456,6 +495,8 @@ AudioSourceCircle.prototype.setupOnHover = function(){
 AudioSourceCircle.prototype.setupOnClick = function(){
     var that = this;
     this.svgSet.click(function(){
+      if(!clickHandlerOn) return
+
       that.onClick();
     });
 };
