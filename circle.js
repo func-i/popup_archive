@@ -73,14 +73,28 @@ function Circle(x, y, svgEl) {
 };
 
 Circle.prototype.init = function(){
-  this.innerCircleRadius = (MAX_INNER_CIRCLE_RADIUS - MIN_INNER_CIRCLE_RADIUS) * Math.random() + MIN_INNER_CIRCLE_RADIUS;
+  this.setInnerColor();
+  this.setOuterColor();
+  this.setInnerRadius();
 
   this.draw();
   this.setupOnHover();
   this.setupOnClick();
+};
 
-  this.outerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
-  this.innerCircleColor = COLORS[Math.floor(COLORS.length  * Math.random())];
+Circle.prototype.setInnerColor = function(color){
+  this.innerCircleColor = color || COLORS[Math.floor(COLORS.length  * Math.random())];
+};
+
+Circle.prototype.setOuterColor = function(color){
+  this.outerCircleColor = color || COLORS[Math.floor(COLORS.length  * Math.random())];
+};
+
+Circle.prototype.setInnerRadius = function(radius){
+  this.innerCircleRadius = radius || ((MAX_INNER_CIRCLE_RADIUS - MIN_INNER_CIRCLE_RADIUS) * Math.random() + MIN_INNER_CIRCLE_RADIUS);
+
+  if(this.innerCircle)
+    this.innerCircle.stop().attr({'r' : this.innerCircleRadius});
 };
 
 Circle.prototype.hide = function(){

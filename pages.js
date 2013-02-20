@@ -37,15 +37,24 @@ function initSVG(){
 };
 
 function loadMainPage(){
+  cancelAllTimers();
+
   showAudioSourceCircle();
+
+  hoverHandlerOn = false;
+  clickHandlerOn = false;
+
+  setRandomColors();
+
+  for(var x = 0; x < circleMatrix.length; x++)
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      circleMatrix[x][y].reset();
+    }
 
   audioContext = new webkitAudioContext();
 
   //loadAudio();
   //loadNoise();
-
-  hoverHandlerOn = true;
-  clickHandlerOn = true;
 
   $('svg').mousemove(function(e){
     if(audioVolumeControl){
@@ -60,6 +69,7 @@ function loadMainPage(){
 var pathQueue;
 var pageOneIntervalTimer;
 function loadPageOne(){
+  setRandomColors();
   resetNonAudioPages();
 
   for(var x = 0; x < circleMatrix.length; x++){
@@ -109,6 +119,7 @@ function connectRandomCircle(){
 var bubbleArray;
 var pageTwoIntervalTimer;
 function loadPageTwo(){
+  setRandomColors();
   resetNonAudioPages();
 
   //Bubble from bottom to top
@@ -122,7 +133,7 @@ function bubbleToTop(){
     var currentBubble = bubbleArray[x];
 
     if(typeof currentBubble == 'undefined'){
-      if(Math.random()*Math.random() < 0.5)
+      if(Math.random() < 0.75)
         continue;
 
       nextBubble = circleMatrix[x][circleMatrix[x].length - 1];
@@ -151,6 +162,7 @@ function bubbleToTop(){
 };
 
 function loadPageThree(){
+  setRandomColors();
   resetNonAudioPages();
 
   circleMatrix[4][4].grow(3, 1500);
@@ -172,6 +184,7 @@ var currentColoredColumnIndex;
 var pageFourIntervalTimer;
 function loadPageFour(){
   resetNonAudioPages();
+  setRandomColors();
 
   currentColoredColumnIndex = undefined;
   pageFourIntervalTimer = setInterval(colorColumn, 1500);
@@ -195,6 +208,75 @@ function colorColumn(){
   }
 };
 
+var swappedInnerRadiuses;
+function loadPageFive(){
+  hideAudioSourceCircle();
+
+  //Split the screen width in 3 and set size of innerRadius accordingly
+  for(var x = 0; x < circleMatrix.length; x++){
+    var innerRadius;
+    if(x < Math.floor(circleMatrix.length/3)) innerRadius = 10;
+    else if(x < 2*Math.floor(circleMatrix.length/3)) innerRadius = 25;
+    else innerRadius = 17;
+
+    for(var y = 0; y < circleMatrix[x].length; y++)
+      circleMatrix[x][y].setInnerRadius(innerRadius);
+  }
+
+  swapRandomInnerRadiuses();
+
+  setRandomColors();
+  resetNonAudioPages();
+};
+
+function swapRandomInnerRadiuses(){
+  swappedInnerRadiuses = [];
+
+  var height = circleMatrix[0].length;
+  var firstSectionStart = 0;
+  var firstSectionWidth = Math.floor(circleMatrix.length/3);
+  var secondSectionStart = Math.floor(circleMatrix.length/3);
+  var secondSectionWidth = Math.floor(circleMatrix.length/3);
+  var thirdSectionStart = 2*Math.floor(circleMatrix.length/3);
+  var thirdSectionWidth = circleMatrix.length - 2*Math.floor(circleMatrix.length/3);
+  //Swap 1st and 2nd section
+  for(var i = 0; i < 3; i++){
+    var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
+    var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
+    firstSectionRandomCircle.setInnerRadius(25);
+    secondSectionRandomCircle.setInnerRadius(10);
+    swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle, 10, 25]);
+  }
+  //Swap 1st and 3rd section
+  for(var i = 0; i < 3; i++){
+    var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
+    var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
+    firstSectionRandomCircle.setInnerRadius(17);
+    thirdSectionRandomCircle.setInnerRadius(10);
+    swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle, 10, 17]);
+  }
+  //Swap 1st and 3rd section
+  for(var i = 0; i < 3; i++){
+    var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
+    var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
+    secondSectionRandomCircle.setInnerRadius(17);
+    thirdSectionRandomCircle.setInnerRadius(25);
+    swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle, 25, 17]);
+  }
+};
+
+function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
+    while(true){
+      var randomXIndex = Math.round((width - 1)*Math.random());
+      var randomYIndex = Math.round((height -1)*Math.random());
+      var randomCircle = circleMatrix[xOffset+randomXIndex][yOffset + randomYIndex];
+
+      if(randomCircle.isVisible() && randomCircle.currentInnerRadius() == unSwappedRadius)
+        return randomCircle;
+    }
+};
+
+
 function resetNonAudioPages(){
   cancelAllTimers();
 
@@ -206,6 +288,14 @@ function resetNonAudioPages(){
   for(var x = 0; x < circleMatrix.length; x++)
     for(var y = 0; y < circleMatrix[x].length; y++){
       circleMatrix[x][y].reset();
+    }
+};
+
+function setRandomColors(){
+  for(var x = 0; x < circleMatrix.length; x++)
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      circleMatrix[x][y].setInnerColor();
+      circleMatrix[x][y].setOuterColor();
     }
 };
 
