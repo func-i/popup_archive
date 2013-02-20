@@ -37,9 +37,7 @@ function initSVG(){
 };
 
 function loadMainPage(){
-  circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].remove();
-  audioSourceCircle.show();
-  circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = audioSourceCircle;
+  showAudioSourceCircle();
 
   audioContext = new webkitAudioContext();
 
@@ -59,23 +57,28 @@ function loadMainPage(){
   });
 };
 
+var pathQueue;
 function loadPageOne(){
-  audioSourceCircle.hide();
-  circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
-  circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].init();
+  hideAudioSourceCircle();
 
   hoverHandlerOn = false;
   clickHandlerOn = false;
 
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++)
+  for(var x = 0; x < circleMatrix.length; x++){
+    for(var y = 0; y < circleMatrix[x].length; y++){
       circleMatrix[x][y].reset();
 
+      var blur = 5 * ($('#page_one .container').width() - x*BOX_WIDTH) / $('#page_one .container').width();
+      if(blur > 0)
+        circleMatrix[x][y].blur(blur);
+    }
+  }
+
   //Choose a random circle
+  pathQueue = [];
   setInterval(connectRandomCircle, 2000);
 };
 
-var pathQueue = [];
 function connectRandomCircle(){
   if(pathQueue.length > 5){
     var removedPathArr = pathQueue.shift();
@@ -105,4 +108,76 @@ function connectRandomCircle(){
   var path = connectFromCircle.connectNeighbourWithArc(newConnectedCircle);
 
   pathQueue.push([connectFromCircle, newConnectedCircle, path]);
+};
+
+var bubbleArray;
+function loadPageTwo(){
+  hideAudioSourceCircle();
+
+  hoverHandlerOn = false;
+  clickHandlerOn = false;
+
+  for(var x = 0; x < circleMatrix.length; x++)
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      circleMatrix[x][y].reset(0.5);
+    }
+
+  //Bubble from bottom to top
+  bubbleArray = new Array(circleMatrix.length);
+  setInterval(bubbleToTop, 500);
+};
+
+function bubbleToTop(){
+  for(var x = 0; x < bubbleArray.length; x++){
+    var nextBubble;
+    var currentBubble = bubbleArray[x];
+
+    if(typeof currentBubble == 'undefined'){
+      if(Math.random()*Math.random() < 0.5)
+        continue;
+
+      nextBubble = circleMatrix[x][circleMatrix[x].length - 1];
+    }
+    else{
+      var currentYIndex = currentBubble.y / BOX_WIDTH - 0.5;
+
+      if(currentYIndex == 0 || !circleMatrix[x][currentYIndex - 1].isVisible()){
+        nextBubble = undefined;
+      }
+      else
+        nextBubble = circleMatrix[x][currentYIndex - 1];
+
+      currentBubble.reset(0.5);
+    }
+
+    if(typeof nextBubble != 'undefined'){
+      nextBubble.grow(0.5, 700);
+
+      if(0 == nextBubble.y / BOX_WIDTH - 0.5 || !circleMatrix[x][nextBubble.y / BOX_WIDTH - 0.5 - 1].isVisible())
+        nextBubble.sendBroadcast(1, 0.7)
+    }
+
+    bubbleArray[x] = nextBubble;
+  }
+};
+
+function loadPageThree(){
+};
+
+function hideAudioSourceCircle(){
+  audioSourceCircle.hide();
+
+  if(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle){
+    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
+    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].init();
+  }
+};
+
+function showAudioSourceCircle(){
+  audioSourceCircle.show();
+
+  if(!(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle)){
+    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].remove();
+    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = audioSourceCircle;
+  }
 };

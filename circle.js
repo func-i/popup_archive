@@ -10,20 +10,61 @@ Raphael.fn.arrow = function (x, y, length, height, width) {
   );
 };
 
-/*Raphael.customAttributes.arc = function (value, total, R) {
-  var alpha = 360 / total * value,
-  a = (90 - alpha) * Math.PI / 180,
-                        x = 300 + R * Math.cos(a),
-                        y = 300 - R * Math.sin(a),
-                        color = "hsb(".concat(Math.round(R) / 200, ",", value / total, ", .75)"),
-                        path;
-                    if (total == value) {
-                        path = [["M", 300, 300 - R], ["A", R, R, 0, 1, 1, 299.99, 300 - R]];
-                    } else {
-                        path = [["M", 300, 300 - R], ["A", R, R, 0, +(alpha > 180), 1, x, y]];
-                    }
-                    return {path: path, stroke: color};
-                };*/
+/*!
+ * Raphael Blur Plugin 0.1
+ *
+ * Copyright (c) 2009 Dmitry Baranovskiy (http://raphaeljs.com)
+ * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
+ */
+(function () {
+    if (typeof(Raphael.idGenerator) == 'undefined')
+      Raphael.idGenerator = 0;
+
+    if (Raphael.vml) {
+        var reg = / progid:\S+Blur\([^\)]+\)/g;
+        Raphael.el.blur = function (size) {
+            var s = this.node.style,
+                f = s.filter;
+            f = f.replace(reg, "");
+            if (size != "none") {
+                s.filter = f + " progid:DXImageTransform.Microsoft.Blur(pixelradius=" + (+size || 1.5) + ")";
+                s.margin = Raphael.format("-{0}px 0 0 -{0}px", Math.round(+size || 1.5));
+            } else {
+                s.filter = f;
+                s.margin = 0;
+            }
+        };
+    } else {
+        var $ = function (el, attr) {
+            if (attr) {
+                for (var key in attr) if (attr.hasOwnProperty(key)) {
+                    el.setAttribute(key, attr[key]);
+                }
+            } else {
+                return document.createElementNS("http://www.w3.org/2000/svg", el);
+            }
+        };
+        Raphael.el.blur = function (size) {
+            // Experimental. No WebKit support.
+            if (size != "none") {
+                var fltr = $("filter"),
+                    blur = $("feGaussianBlur");
+                fltr.id = "r" + (Raphael.idGenerator++).toString(36);
+                $(blur, {stdDeviation: +size || 1.5});
+                fltr.appendChild(blur);
+                this.paper.defs.appendChild(fltr);
+                this._blur = fltr;
+                $(this.node, {filter: "url(#" + fltr.id + ")"});
+            } else {
+                if (this._blur) {
+                    this._blur.parentNode.removeChild(this._blur);
+                    delete this._blur;
+                }
+                this.node.removeAttribute("filter");
+            }
+        };
+    }
+})();
 
 function Circle(x, y, svgEl) {
   this.x = x;
@@ -51,6 +92,10 @@ Circle.prototype.show = function(){
   this.reset();
 };
 
+Circle.prototype.isVisible = function(){
+  return this.innerCircle.node.style.display !== 'none'
+}
+
 Circle.prototype.remove = function(){
   this.svgSet.remove();
   delete this;
@@ -71,12 +116,10 @@ Circle.prototype.setupOnClick = function(){
 
 Circle.prototype.setupOnHover = function(){
     var that = this;
-    that.svgSet.hover(function() {
+    this.svgSet.hover(function() {
       if(!hoverHandlerOn) return
 
-      that.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS}, GROWTH_TIME, 'easeIn');
-      that.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS}, GROWTH_TIME,'easeIn');
-      that.colorOn();
+      that.grow();
     },
     function() {
       if(!hoverHandlerOn) return
@@ -85,6 +128,26 @@ Circle.prototype.setupOnHover = function(){
       that.reset();
     });
 };
+
+Circle.prototype.grow = function(scale, growthTime){
+  scale = scale || 1;
+  growthTime = growthTime || GROWTH_TIME;
+
+  this.outerCircle.stop().animate({r: MAX_GROWTH_RADIUS*scale}, growthTime, 'easeIn');
+  this.innerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS*scale}, growthTime,'easeIn');
+  this.colorOn();
+};
+
+Circle.prototype.blur = function(size){
+  this.outerCircle.blur(size);
+  this.innerCircle.blur(size);
+};
+
+Circle.prototype.unblur = function(){
+  this.outerCircle.blur('none');
+  this.innerCircle.blur('none');
+};
+
 
 Circle.prototype.draw = function(){
   this.innerCircle = svgElem.circle(this.x, this.y, this.innerCircleRadius);
@@ -190,6 +253,8 @@ Circle.prototype.connectNeighbourWithLine = function(neighbour){
 };
 
 Circle.prototype.removeConnectedPaths = function(){
+  if(typeof this.connectedPaths == 'undefined') return;
+
   var that = this;
   $.each(this.connectedPaths, function(i, pathArr)
   {
@@ -254,9 +319,11 @@ Circle.prototype.resetNeighbours = function(){
     this.callOnNeighbours(3, function(){this.reset()});
 };
 
-Circle.prototype.reset = function(){
-  this.outerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS}, RESET_TIME);
-  this.innerCircle.stop().animate({r: this.innerCircleRadius}, RESET_TIME);
+Circle.prototype.reset = function(scaleFactor){
+  scaleFactor = scaleFactor || 1;
+
+  this.outerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS*scaleFactor}, RESET_TIME);
+  this.innerCircle.stop().animate({r: this.innerCircleRadius*scaleFactor}, RESET_TIME);
   this.colorOff();
 
   this.svgSet.animate({
@@ -267,6 +334,7 @@ Circle.prototype.reset = function(){
   this.clickOn = false;
 
   this.stopBroadcast();
+  this.removeConnectedPaths();
 };
 
 Circle.prototype.startBroadcast = function(numberOfNeighbours, opacity){
