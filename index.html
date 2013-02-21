@@ -17,32 +17,42 @@
         top: 0;
         right: 0;
         bottom: 0;
+        z-index: 0;
+        /*margin-top: 220px;*/
+      }
+      #centerer_container{
+        margin: 0 auto;
+        width: 840px;
+        position: relative;
+        z-index: 1;
+      }
+      #content_container{
+        width: 820px;
+        margin: 10px;
+      }
+      header{
+        height: 220px;
       }
       .page{
-        display: none;
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        bottom: 0;
-      }
-      .container{
-        width: 600px;
-        margin-left: 200px;
-        margin-top: 100px;
+        width: 450px;
       }
     </style>
 
   </head>
   <body>
-    <div id="svg_container"></div>
+    <div id="centerer_container">
+      <div id="content_container">
+        <header>
 
-    <div class="page" id="page_one">
-      <div class="container">
-        <h1>Journalists, broadcasters, & producers</h1>
-        <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+        </header>
+        <div class="page active">
+          <h1>Journalists, broadcasters, & producers</h1>
+          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+        </div>
       </div>
     </div>
+
+        <div id="svg_container"></div>
 
     <script>
 

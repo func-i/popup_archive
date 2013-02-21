@@ -1,4 +1,4 @@
-var svgElem, svgWidth, svgHeight, circleMatrix;
+var svgElem, svgWidth, svgHeight, svgTopMargin, circleMatrix;
 var audioSourceCircle;
 
 var MAIN_PAGE_SCROLL_HEIGHT = 800;
@@ -13,26 +13,25 @@ $(function(){
 
 function initSVG(){
   svgWidth = window.innerWidth;
-  svgHeight = window.innerHeight;
+  svgHeight = $('#svg_container').height();
+  svgTopMargin = $('header').height();
   svgElem = Raphael('svg_container', svgWidth, svgHeight);
 
-
   circleMatrix = new Array(Math.ceil(svgWidth/BOX_WIDTH));
-  for(var x = BOX_WIDTH/2; x < svgWidth; x += BOX_WIDTH)
+  for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
   {
-    circleMatrix[x/BOX_WIDTH - 0.5] = new Array(Math.ceil(svgHeight/BOX_WIDTH));
-    for(var y = BOX_WIDTH/2; y < svgHeight; y += BOX_WIDTH)
+    var coorX = Circle.convertCoordinatesIntoMatrixIndex(x, null)[0];
+    circleMatrix[coorX] = new Array(Math.ceil((svgHeight - svgTopMargin)/BOX_WIDTH));
+    for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
     {
-      circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5] = new Circle(x, y, svgElem);
-      circleMatrix[x/BOX_WIDTH - 0.5][y/BOX_WIDTH - 0.5].init();
+      coorY = Circle.convertCoordinatesIntoMatrixIndex(null, y)[1];
+      circleMatrix[coorX][coorY] = new Circle(x, y, svgElem);
+      circleMatrix[coorX][coorY].init();
     }
   }
 
-  var randomXCoor = (svgWidth - 2*BOX_WIDTH)*Math.random() + BOX_WIDTH;
-  var randomYCoor = (svgHeight - 2*BOX_WIDTH)*Math.random() + BOX_WIDTH;
-  var audioXCoor = randomXCoor - (randomXCoor - BOX_WIDTH/2) % BOX_WIDTH;
-  var audioYCoor = randomYCoor - (randomYCoor - BOX_WIDTH/2) % BOX_WIDTH;
-  audioSourceCircle =  new AudioSourceCircle(audioXCoor, audioYCoor, svgElem);
+  var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
+  audioSourceCircle =  new AudioSourceCircle(replaceCircleForAudio.x, replaceCircleForAudio.y, svgElem);
   audioSourceCircle.init();
 };
 
@@ -41,8 +40,8 @@ function loadMainPage(){
 
   showAudioSourceCircle();
 
-  hoverHandlerOn = false;
-  clickHandlerOn = false;
+  hoverHandlerOn = true;
+  clickHandlerOn = true;
 
   setRandomColors();
 
@@ -72,9 +71,11 @@ function loadPageOne(){
   setRandomColors();
   resetNonAudioPages();
 
+  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
-      var blur = 5 * ($('#page_one .container').width() - x*BOX_WIDTH) / $('#page_one .container').width();
+      var blur = 5 * (rightPosOfText - x) / rightPosOfText;
       if(blur > 0)
         circleMatrix[x][y].blur(blur);
     }
@@ -88,24 +89,15 @@ function loadPageOne(){
 function connectRandomCircle(){
   if(pathQueue.length > 5){
     var removedPathArr = pathQueue.shift();
-    removedPathArr[0].removePath(removedPathArr[1], removedPathArr[2]);
+    removedPathArr[0].removePath(removedPathArr[2], removedPathArr[1]);
   }
 
-  var randomUncoveredXCoor = (svgWidth - Math.ceil($('#page_one .container').width()))*Math.random() + Math.ceil($('#page_one .container').width());
-  randomUncoveredXCoor = randomUncoveredXCoor - (randomUncoveredXCoor - BOX_WIDTH/2)%BOX_WIDTH;
-  var randomYCoor = svgHeight*Math.random();
-  randomYCoor = randomYCoor - (randomYCoor - BOX_WIDTH/2)%BOX_WIDTH;
-  var newConnectedCircle = circleMatrix[randomUncoveredXCoor/BOX_WIDTH - 0.5][randomYCoor/BOX_WIDTH - 0.5];
-
+  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+  var newConnectedCircle = getRandomVisibleCircle(rightPosOfText, 0, circleMatrix.length - rightPosOfText, circleMatrix[0].length);
 
   var connectFromCircle;
   if(pathQueue.length == 0){
-    randomUncoveredXCoor = (svgWidth - Math.ceil($('#page_one .container').width()))*Math.random() + Math.ceil($('#page_one .container').width());
-    randomUncoveredXCoor = randomUncoveredXCoor - (randomUncoveredXCoor - BOX_WIDTH/2)%BOX_WIDTH;
-    randomYCoor = svgHeight*Math.random();
-    randomYCoor = randomYCoor - (randomYCoor - BOX_WIDTH/2)%BOX_WIDTH;
-
-    connectFromCircle = circleMatrix[randomUncoveredXCoor/BOX_WIDTH - 0.5][randomYCoor/BOX_WIDTH - 0.5];
+    connectFromCircle = getRandomVisibleCircle(rightPosOfText, 0, circleMatrix.length - rightPosOfText, circleMatrix[0].length);
   }
   else{
     connectFromCircle = pathQueue[pathQueue.length - 1][1]
@@ -139,7 +131,7 @@ function bubbleToTop(){
       nextBubble = circleMatrix[x][circleMatrix[x].length - 1];
     }
     else{
-      var currentYIndex = currentBubble.y / BOX_WIDTH - 0.5;
+      var currentYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, currentBubble.y)[1];
 
       if(currentYIndex == 0 || !circleMatrix[x][currentYIndex - 1].isVisible()){
         nextBubble = undefined;
@@ -153,7 +145,9 @@ function bubbleToTop(){
     if(typeof nextBubble != 'undefined'){
       nextBubble.grow(0.5, 700);
 
-      if(0 == nextBubble.y / BOX_WIDTH - 0.5 || !circleMatrix[x][nextBubble.y / BOX_WIDTH - 0.5 - 1].isVisible())
+      var nextYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, nextBubble.y)[1];
+
+      if(0 == nextYIndex || !circleMatrix[x][nextYIndex].isVisible())
         nextBubble.sendBroadcast(1, 0.7)
     }
 
@@ -165,19 +159,19 @@ function loadPageThree(){
   setRandomColors();
   resetNonAudioPages();
 
-  circleMatrix[4][4].grow(3, 1500);
-  circleMatrix[4][4].callOnNeighbours(1, function(){
+  circleMatrix[4][3].grow(3, 1500);
+  circleMatrix[4][3].callOnNeighbours(1, function(){
     this.innerCircle.stop().animate({'opacity': 0}, 1500);
     this.outerCircle.stop().animate({'opacity': 0}, 1500);
   });
-  circleMatrix[4][4].startBroadcast(1, 0.7, 1000);
+  circleMatrix[4][3].startBroadcast(1, 0.7, 1000);
 
-  circleMatrix[9][2].grow(3, 1500);
-  circleMatrix[9][2].callOnNeighbours(1, function(){
+  circleMatrix[9][1].grow(3, 1500);
+  circleMatrix[9][1].callOnNeighbours(1, function(){
     this.innerCircle.stop().animate({'opacity': 0}, 1500);
     this.outerCircle.stop().animate({'opacity': 0}, 1500);
   });
-  circleMatrix[9][2].startBroadcast(1, 0.7, 1000);
+  circleMatrix[9][1].startBroadcast(1, 0.7, 1000);
 };
 
 var currentColoredColumnIndex;
@@ -323,9 +317,7 @@ function swapRandomInnerRadiuses(){
 
 function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
     while(true){
-      var randomXIndex = Math.round((width - 1)*Math.random());
-      var randomYIndex = Math.round((height -1)*Math.random());
-      var randomCircle = circleMatrix[xOffset+randomXIndex][yOffset + randomYIndex];
+      var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
 
       if(randomCircle.isVisible() && randomCircle.currentInnerRadius() == unSwappedRadius)
         return randomCircle;
@@ -381,9 +373,18 @@ function resetNonAudioPages(){
   hoverHandlerOn = false;
   clickHandlerOn = false;
 
+  var leftTextOffsetInBoxes = Math.floor($('#content_container').offset().left / BOX_WIDTH);
+  var textWidthInBoxes = Math.ceil($('.page.active').first().width() / BOX_WIDTH);
+  var textHeightInBoxes = Math.ceil($('.page.active').first().height() / BOX_WIDTH);
+
   for(var x = 0; x < circleMatrix.length; x++)
     for(var y = 0; y < circleMatrix[x].length; y++){
       circleMatrix[x][y].reset();
+
+      if(x >= leftTextOffsetInBoxes && x < leftTextOffsetInBoxes + textWidthInBoxes && y < textHeightInBoxes)
+        circleMatrix[x][y].hide();
+      else
+        circleMatrix[x][y].show();
     }
 };
 
@@ -395,6 +396,22 @@ function setRandomColors(){
     }
 };
 
+function getRandomCircle(xOffset, yOffset, width, height){
+      var randomXIndex = Math.round((width - 1)*Math.random());
+      var randomYIndex = Math.round((height -1)*Math.random());
+      return circleMatrix[xOffset+randomXIndex][yOffset + randomYIndex];
+};
+
+function getRandomVisibleCircle(xOffset, yOffset, width, height){
+  while(true){
+    var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
+
+    if(typeof randomCircle != 'undefined' && randomCircle.isVisible())
+        return randomCircle;
+  }
+}
+
+
 function cancelAllTimers(){
   clearInterval(pageOneIntervalTimer);
   clearInterval(pageTwoIntervalTimer);
@@ -405,9 +422,10 @@ function hideAudioSourceCircle(){
   audioSourceCircle.hide();
   audioSourceCircle.stopBroadcast();
 
-  if(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle){
-    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
-    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].init();
+  var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
+  if(circleMatrix[coor[0]][coor[1]] instanceof AudioSourceCircle){
+    circleMatrix[coor[0]][coor[1]] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
+    circleMatrix[coor[0]][coor[1]].init();
   }
 };
 
@@ -415,8 +433,9 @@ function showAudioSourceCircle(){
   audioSourceCircle.show();
   audioSourceCircle.startBroadcast(1, 0.7);
 
-  if(!(circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] instanceof AudioSourceCircle)){
-    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5].remove();
-    circleMatrix[audioSourceCircle.x/BOX_WIDTH - 0.5][audioSourceCircle.y/BOX_WIDTH - 0.5] = audioSourceCircle;
+  var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
+  if(!(circleMatrix[coor[0]][coor[1]] instanceof AudioSourceCircle)){
+    circleMatrix[coor[0]][coor[1]].remove();
+    circleMatrix[coor[0]][coor[1]] = audioSourceCircle;
   }
 };

@@ -82,6 +82,14 @@ Circle.prototype.init = function(){
   this.setupOnClick();
 };
 
+Circle.convertCoordinatesIntoMatrixIndex = function(x, y){
+  var xIndex = (x - (x - BOX_WIDTH/2)%BOX_WIDTH)/BOX_WIDTH - 0.5;
+  y = y - 220;
+  var yIndex = (y - (y - BOX_WIDTH/2)%BOX_WIDTH)/BOX_WIDTH - 0.5;
+  return [xIndex, yIndex];
+}
+
+
 Circle.prototype.setInnerColor = function(color){
   this.innerCircleColor = color || COLORS[Math.floor(COLORS.length  * Math.random())];
 };
@@ -270,7 +278,7 @@ Circle.prototype.removeConnectedPaths = function(){
   if(typeof this.connectedPaths == 'undefined') return;
 
   var that = this;
-  $.each(this.connectedPaths, function(i, pathArr)
+  $.each($.extend(true, [], this.connectedPaths), function(i, pathArr)
   {
     that.removePath(pathArr[0], pathArr[1]);
   });
@@ -280,15 +288,7 @@ Circle.prototype.removeConnectedPaths = function(){
   this.connectedPaths = [];
 };
 
-Circle.prototype.removePath = function(neighbour, path){
-  if(neighbour.connectedPaths.length == 1){
-    neighbour.colorOff();
-  }
-
-  if(this.connectedPaths.length == 1){
-    this.colorOff();
-  }
-
+Circle.prototype.removePath = function(path, neighbour){
   path.animate({opacity: 0}, RESET_TIME);
 
   var indexOf;
@@ -306,6 +306,14 @@ Circle.prototype.removePath = function(neighbour, path){
   neighbour.connectedPaths.splice(indexOf, 1);
 
   path.remove();
+
+  if(neighbour.connectedPaths.length == 0){
+    neighbour.colorOff();
+  }
+  if(this.connectedPaths.length == 0){
+    this.colorOff();
+  }
+
 };
 
 Circle.prototype.pushNeighbours = function(desiredRadius){
@@ -339,6 +347,7 @@ Circle.prototype.reset = function(scaleFactor){
   this.outerCircle.stop().animate({r: OUTER_CIRCLE_RADIUS*scaleFactor}, RESET_TIME);
   this.innerCircle.stop().animate({r: this.innerCircleRadius*scaleFactor}, RESET_TIME);
   this.colorOff();
+  this.unblur();
 
   this.svgSet.animate({
     cx: this.x,
@@ -419,8 +428,8 @@ Circle.prototype.callOnNeighbours = function(maxDegreesOfSeperation, functionToC
     args.push(arguments[i]);
   }
 
-  var xIndex = this.x/BOX_WIDTH - 0.5;
-  var yIndex = this.y/BOX_WIDTH - 0.5;
+  var coor = Circle.convertCoordinatesIntoMatrixIndex(this.x, this.y);
+  var xIndex = coor[0], yIndex = coor[1];
 
   //STARTING TOP LEFT CORNER OF NEIGHBOURS, LOOP THROUGH EACH LEVEL
   for(var xLevel = -maxDegreesOfSeperation; xLevel <= maxDegreesOfSeperation; xLevel++){
