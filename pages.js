@@ -2,14 +2,71 @@ var svgElem, svgWidth, svgHeight, svgTopMargin, circleMatrix;
 var audioSourceCircle;
 
 var MAIN_PAGE_SCROLL_HEIGHT = 800;
+var PAGE_ONE_SCROLL_HEIGHT = 1600;
+var PAGE_TWO_SCROLL_HEIGHT = 2400;
+var PAGE_THREE_SCROLL_HEIGHT = 3200;
+var PAGE_FOUR_SCROLL_HEIGHT = 4000;
+var PAGE_FIVE_SCROLL_HEIGHT = 4800;
+var PAGE_SIX_SCROLL_HEIGHT = 5600;
 
+var currentPage;
 $(function(){
   $(document).scroll(function(e){
-    if(e.scrollTop > MAIN_PAGE_SCROLL_HEIGHT)
-      unloadMainPage();
-
+    loadCorrectPage();
   });
 });
+
+function loadCorrectPage(){
+    var scrollTop = $(window).scrollTop() + window.innerHeight;
+    if(scrollTop < MAIN_PAGE_SCROLL_HEIGHT){
+      if(currentPage != 0){
+        currentPage = 0;
+        loadMainPage();
+      }
+    }
+    else if(scrollTop < PAGE_ONE_SCROLL_HEIGHT){
+      if(currentPage != 1){
+        currentPage = 1;
+        loadPageOne();
+      }
+    }
+    else if(scrollTop < PAGE_TWO_SCROLL_HEIGHT){
+      if(currentPage != 2){
+        currentPage = 2;
+        loadPageTwo();
+      }
+    }
+    else if(scrollTop < PAGE_THREE_SCROLL_HEIGHT){
+      if(currentPage != 3){
+        currentPage = 3;
+        loadPageThree();
+      }
+    }
+    else if(scrollTop < PAGE_FOUR_SCROLL_HEIGHT){
+      if(currentPage != 4){
+        currentPage = 4;
+        loadPageFour();
+      }
+    }
+    else if(scrollTop < PAGE_FIVE_SCROLL_HEIGHT){
+      if(currentPage != 5){
+        currentPage = 5;
+        loadPageFive();
+      }
+    }
+    else if(scrollTop < PAGE_SIX_SCROLL_HEIGHT){
+      if(currentPage != 6){
+        currentPage = 6;
+        loadPageSix();
+      }
+    }
+    else{
+      if(currentPage != 0){
+        currentPage = 0;
+        loadPageSeven();
+      }
+    }
+}
 
 function initSVG(){
   svgWidth = window.innerWidth;
@@ -37,6 +94,7 @@ function initSVG(){
 
 function loadMainPage(){
   cancelAllTimers();
+  hideAllPages();
 
   showAudioSourceCircle();
 
@@ -47,6 +105,7 @@ function loadMainPage(){
 
   for(var x = 0; x < circleMatrix.length; x++)
     for(var y = 0; y < circleMatrix[x].length; y++){
+      circleMatrix[x][y].show();
       circleMatrix[x][y].reset();
     }
 
@@ -68,6 +127,9 @@ function loadMainPage(){
 var pathQueue;
 var pageOneIntervalTimer;
 function loadPageOne(){
+  hideAllPages();
+  showPage(1);
+
   setRandomColors();
   resetNonAudioPages();
   resetAllCircles();
@@ -112,6 +174,9 @@ function connectRandomCircle(){
 var bubbleArray;
 var pageTwoIntervalTimer;
 function loadPageTwo(){
+  hideAllPages();
+  showPage(2);
+
   setRandomColors();
   resetNonAudioPages();
   resetAllCircles();
@@ -158,6 +223,9 @@ function bubbleToTop(){
 };
 
 function loadPageThree(){
+  hideAllPages();
+  showPage(3);
+
   setRandomColors();
   resetNonAudioPages();
   resetAllCircles();
@@ -180,6 +248,9 @@ function loadPageThree(){
 var currentColoredColumnIndex;
 var pageFourIntervalTimer;
 function loadPageFour(){
+  hideAllPages();
+  showPage(4);
+
   resetNonAudioPages();
   resetAllCircles();
   setRandomColors();
@@ -217,6 +288,9 @@ var swappedInnerRadiuses;
 var pageFiveIntervalTimer;
 
 function loadPageFive(){
+  hideAllPages();
+  showPage(5);
+
   resetNonAudioPages();
 
   //Split the screen width in 3 and set size of innerRadius accordingly
@@ -337,6 +411,9 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
 
 var pageSixIntervalTimer;
 function loadPageSix(){
+  hideAllPages();
+  showPage(6);
+
   resetNonAudioPages();
 
   var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
@@ -427,6 +504,9 @@ function swapCircles(){
 }
 
 function loadPageSeven(){
+  hideAllPages();
+  showPage(7);
+
   resetNonAudioPages();
   resetAllCircles();
 
@@ -513,8 +593,15 @@ function getRandomVisibleCircle(xOffset, yOffset, width, height){
     if(typeof randomCircle != 'undefined' && randomCircle.isVisible())
         return randomCircle;
   }
-}
+};
 
+function hideAllPages(){
+  $('.page').removeClass('active');
+};
+
+function showPage(pageNumber){
+  $('#page_' + pageNumber).addClass('active');
+}
 
 function cancelAllTimers(){
   clearInterval(pageOneIntervalTimer);
@@ -522,7 +609,7 @@ function cancelAllTimers(){
   clearInterval(pageFourIntervalTimer);
   clearInterval(pageFiveIntervalTimer);
   clearInterval(pageSixIntervalTimer);
-}
+};
 
 function hideAudioSourceCircle(){
   audioSourceCircle.hide();
