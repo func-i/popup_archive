@@ -70,6 +70,7 @@ var pageOneIntervalTimer;
 function loadPageOne(){
   setRandomColors();
   resetNonAudioPages();
+  resetAllCircles();
 
   var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
 
@@ -113,6 +114,7 @@ var pageTwoIntervalTimer;
 function loadPageTwo(){
   setRandomColors();
   resetNonAudioPages();
+  resetAllCircles();
 
   //Bubble from bottom to top
   bubbleArray = new Array(circleMatrix.length);
@@ -143,7 +145,7 @@ function bubbleToTop(){
     }
 
     if(typeof nextBubble != 'undefined'){
-      nextBubble.grow(0.5, 700);
+      nextBubble.grow(1, 700);
 
       var nextYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, nextBubble.y)[1];
 
@@ -158,6 +160,7 @@ function bubbleToTop(){
 function loadPageThree(){
   setRandomColors();
   resetNonAudioPages();
+  resetAllCircles();
 
   circleMatrix[4][3].grow(3, 1500);
   circleMatrix[4][3].callOnNeighbours(1, function(){
@@ -178,7 +181,15 @@ var currentColoredColumnIndex;
 var pageFourIntervalTimer;
 function loadPageFour(){
   resetNonAudioPages();
+  resetAllCircles();
   setRandomColors();
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    var hideLength = Math.floor(circleMatrix[x].length*Math.random()) - 1;
+
+    for(var y = 0; y <hideLength; y++)
+      circleMatrix[x][y].hide();
+  }
 
   currentColoredColumnIndex = undefined;
   pageFourIntervalTimer = setInterval(colorColumn, 1500);
@@ -206,7 +217,7 @@ var swappedInnerRadiuses;
 var pageFiveIntervalTimer;
 
 function loadPageFive(){
-  hideAudioSourceCircle();
+  resetNonAudioPages();
 
   //Split the screen width in 3 and set size of innerRadius accordingly
   for(var x = 0; x < circleMatrix.length; x++){
@@ -222,7 +233,7 @@ function loadPageFive(){
   swapRandomInnerRadiuses();
 
   setRandomColors();
-  resetNonAudioPages();
+  resetAllCircles();
 
   //returnSwappedRadiuses();
   pageFiveIntervalTimer = setTimeout(returnSwappedRadiuses, 5000);
@@ -324,11 +335,100 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
     }
 };
 
+var pageSixIntervalTimer;
 function loadPageSix(){
+  resetNonAudioPages();
+
+  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+
+  for(var x = circleMatrix.length - 1; x >= 0 ; x--)
+  {
+    if(x < rightPosOfText)
+    {
+      for(var y = 0; y < circleMatrix[x].length; y++)
+      {
+        circleMatrix[x][y].setInnerColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);;
+        circleMatrix[x][y].setOuterColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);
+
+        if(circleMatrix[x][y].isVisible() &&
+          (y == 0 || x == circleMatrix.length - 1 || !circleMatrix[x][y-1].isVisible() || !circleMatrix[x+1][y].isVisible() || !circleMatrix[x+1][y -1].isVisible()))
+        {
+          circleMatrix[x][y].colorOn();
+          firstVisible = false;
+        }
+        else{
+          circleMatrix[x][y].colorOff();
+        }
+      }
+    }
+    else if(x == rightPosOfText)
+      for(var y = 0; y < circleMatrix[x].length; y++)
+        circleMatrix[x][y].hide();
+    else{
+      for(var y = 0; y < circleMatrix[x].length; y++){
+        circleMatrix[x][y].setInnerColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);;
+        circleMatrix[x][y].setOuterColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);
+        circleMatrix[x][y].colorOff();
+      }
+    }
+  }
+
+  pageSixIntervalTimer = setInterval(swapCircles, 2000);
 };
+
+function swapCircles(){
+  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+
+  var circle1 = getRandomCircle(rightPosOfText + 1, 0, circleMatrix.length - rightPosOfText - 1, circleMatrix[0].length);
+  circle1.svgSet.toFront();
+  var circle1X = circle1.x, circle1Y = circle1.y;
+  var circle1Coor = Circle.convertCoordinatesIntoMatrixIndex(circle1X, circle1Y);
+
+  var loop = true;
+  var circle2;
+  while(loop){
+    var newX = circle1Coor[0] + Math.round(2*Math.random()) - 1;
+    var newY = circle1Coor[1] + Math.round(2*Math.random()) - 1;
+
+    if(newX >= circleMatrix.length
+      || newY >= circleMatrix.length
+      || typeof circleMatrix[newX][newY] == 'undefined'
+      || !circleMatrix[newX][newY].isVisible()
+      || circleMatrix[newX][newY] == circle1
+      )
+      continue;
+
+    circle2 = circleMatrix[newX][newY];
+    loop = false;
+  }
+  var circle2X = circle2.x, circle2Y = circle2.y;
+  circle2.svgSet.toFront();
+
+  var circle1Anim = Raphael.animation({'cx': circle2X, 'cy': circle2Y}, 1000, 'ease-in', function(){
+    circle1.colorOff();
+  });
+  var circle2Anim = Raphael.animation({'cx': circle1X, 'cy': circle1Y}, 1000, 'ease-in', function(){
+    circle2.colorOff();
+  });
+  circle1.svgSet.stop().animate(circle1Anim);
+  circle2.svgSet.stop().animateWith(circle1.svgSet, circle1Anim, circle2Anim);
+
+  circle1.colorOn();
+  circle2.colorOn();
+
+  circle1.x = circle2X;
+  circle1.y = circle2Y;
+  var circle2Coor = Circle.convertCoordinatesIntoMatrixIndex(circle2X, circle2Y);
+  circleMatrix[circle2Coor[0]][circle2Coor[1]] = circle1;
+
+  circle2.x = circle1X;
+  circle2.y = circle1Y;
+  circleMatrix[circle1Coor[0]][circle1Coor[1]] = circle2;
+}
 
 function loadPageSeven(){
   resetNonAudioPages();
+  resetAllCircles();
 
   for(var x = 0; x < circleMatrix.length; x++){
     var hideHeight, innerColor, outerColor;
@@ -379,13 +479,17 @@ function resetNonAudioPages(){
 
   for(var x = 0; x < circleMatrix.length; x++)
     for(var y = 0; y < circleMatrix[x].length; y++){
-      circleMatrix[x][y].reset();
-
       if(x >= leftTextOffsetInBoxes && x < leftTextOffsetInBoxes + textWidthInBoxes && y < textHeightInBoxes)
         circleMatrix[x][y].hide();
       else
         circleMatrix[x][y].show();
     }
+};
+
+function resetAllCircles(){
+  for(var x = 0; x < circleMatrix.length; x++)
+    for(var y = 0; y < circleMatrix[x].length; y++)
+        circleMatrix[x][y].reset();
 };
 
 function setRandomColors(){
@@ -416,6 +520,8 @@ function cancelAllTimers(){
   clearInterval(pageOneIntervalTimer);
   clearInterval(pageTwoIntervalTimer);
   clearInterval(pageFourIntervalTimer);
+  clearInterval(pageFiveIntervalTimer);
+  clearInterval(pageSixIntervalTimer);
 }
 
 function hideAudioSourceCircle(){

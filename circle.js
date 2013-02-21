@@ -111,7 +111,7 @@ Circle.prototype.hide = function(){
 
 Circle.prototype.show = function(){
   this.svgSet.show();
-  this.reset();
+  //this.reset();
 };
 
 Circle.prototype.isVisible = function(){
