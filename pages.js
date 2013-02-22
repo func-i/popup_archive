@@ -615,12 +615,12 @@ function loadSVGMatrix(pageNumber, handlerOn){
     var contentHeightInBoxes = Math.ceil(contentEl.height() / BOX_WIDTH);
   }
 
-  var circleMatrix = circleMatrices[pageNumber - 1] = new Array(Math.ceil(svgWidth/BOX_WIDTH));
+  var circleMatrix = circleMatrices[pageNumber - 1] = new Array();
 
   for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
   {
     var coorX = Circle.convertCoordinatesIntoMatrixIndex(x, null)[0];
-    circleMatrix[coorX] = new Array(Math.ceil((svgHeight - svgTopMargin)/BOX_WIDTH));
+    circleMatrix.push(new Array());
 
     for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
     {
@@ -629,7 +629,8 @@ function loadSVGMatrix(pageNumber, handlerOn){
       if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes)
         continue;
 
-      circleMatrix[coorX][coorY] = new Circle(x, y, svgElem, circleMatrix);
+      circleMatrix[coorX].push(new Circle(x, y, svgElem, circleMatrix));
+
       circleMatrix[coorX][coorY].init();
       if(handlerOn){
         circleMatrix[coorX][coorY].setupOnHover();
