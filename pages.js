@@ -4,14 +4,19 @@ $(function(){
   listenToScroll();
   scrollStopTimer = null;;
   $(window).scroll(function(){
-    if(scrollStopTimer){
+   /* if(scrollStopTimer){
       clearTimeout(scrollStopTimer);
       scrollStopTimer = null;
     }
 
     listenToScroll();
 
-    scrollStopTimer = setTimeout(scrollStopped, 500);
+    scrollStopTimer = setTimeout(scrollStopped, 500);*/
+  });
+
+  $('header a').click(function(){
+    var pageNumber = $(this).data('page');
+    gotoPage(pageNumber);
   });
 });
 
@@ -109,7 +114,7 @@ function gotoPage(pageNumber){
   var page = $('#page_' + pageNumber);
   var currentOffset = $('#pages_container').offset().left;
   var pageOffset = page.offset().left;
-  //$('#pages_container').animate({'left': currentOffset - pageOffset}, 1000, function(){});
+  $('#pages_container').animate({'left': currentOffset - pageOffset}, 1000, function(){});
 
   var bodyHeight = $('body').height();
   var pagesWidth = $('.page').width() * $('.page').length;
