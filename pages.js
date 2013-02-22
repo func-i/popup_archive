@@ -619,17 +619,19 @@ function loadSVGMatrix(pageNumber, handlerOn){
 
   for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
   {
-    var coorX = Circle.convertCoordinatesIntoMatrixIndex(x, null)[0];
     circleMatrix.push(new Array());
+    var coorX = circleMatrix.length - 1;
 
     for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
     {
-      coorY = Circle.convertCoordinatesIntoMatrixIndex(null, y)[1];
+      var coorY = circleMatrix.length;
 
       if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes)
         continue;
 
       circleMatrix[coorX].push(new Circle(x, y, svgElem, circleMatrix));
+
+      coorY = circleMatrix.length + 1;
 
       circleMatrix[coorX][coorY].init();
       if(handlerOn){
