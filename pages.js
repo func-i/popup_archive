@@ -1,189 +1,412 @@
-var svgElem, svgWidth, svgHeight, svgTopMargin, circleMatrix;
-var audioSourceCircle;
-
-var MAIN_PAGE_SCROLL_HEIGHT = 800;
-var PAGE_ONE_SCROLL_HEIGHT = 1600;
-var PAGE_TWO_SCROLL_HEIGHT = 2400;
-var PAGE_THREE_SCROLL_HEIGHT = 3200;
-var PAGE_FOUR_SCROLL_HEIGHT = 4000;
-var PAGE_FIVE_SCROLL_HEIGHT = 4800;
-var PAGE_SIX_SCROLL_HEIGHT = 5600;
-
-var currentPage;
 $(function(){
-  $(document).scroll(function(e){
-    loadCorrectPage();
+  init();
+
+  listenToScroll();
+  scrollStopTimer = null;;
+  $(window).scroll(function(){
+    if(scrollStopTimer){
+      clearTimeout(scrollStopTimer);
+      scrollStopTimer = null;
+    }
+
+    listenToScroll();
+
+    scrollStopTimer = setTimeout(scrollStopped, 500);
   });
 });
 
-function loadCorrectPage(){
-    var scrollTop = $(window).scrollTop() + window.innerHeight;
-    if(scrollTop < MAIN_PAGE_SCROLL_HEIGHT){
-      if(currentPage != 0){
-        currentPage = 0;
-        loadMainPage();
-      }
-    }
-    else if(scrollTop < PAGE_ONE_SCROLL_HEIGHT){
-      if(currentPage != 1){
-        currentPage = 1;
-        loadPageOne();
-      }
-    }
-    else if(scrollTop < PAGE_TWO_SCROLL_HEIGHT){
-      if(currentPage != 2){
-        currentPage = 2;
-        loadPageTwo();
-      }
-    }
-    else if(scrollTop < PAGE_THREE_SCROLL_HEIGHT){
-      if(currentPage != 3){
-        currentPage = 3;
-        loadPageThree();
-      }
-    }
-    else if(scrollTop < PAGE_FOUR_SCROLL_HEIGHT){
-      if(currentPage != 4){
-        currentPage = 4;
-        loadPageFour();
-      }
-    }
-    else if(scrollTop < PAGE_FIVE_SCROLL_HEIGHT){
-      if(currentPage != 5){
-        currentPage = 5;
-        loadPageFive();
-      }
-    }
-    else if(scrollTop < PAGE_SIX_SCROLL_HEIGHT){
-      if(currentPage != 6){
-        currentPage = 6;
-        loadPageSix();
-      }
-    }
-    else{
-      if(currentPage != 0){
-        currentPage = 0;
-        loadPageSeven();
-      }
-    }
-}
+var targetVerticalScroll, targetHorizontalScroll;
+function listenToScroll(){
+  var currentVerticalScroll = $(window).scrollTop();
+  var bodyHeight = $('body').height();
+  var pagesWidth = $('.page').width() * $('.page').length;
 
-function initSVG(){
-  svgWidth = window.innerWidth;
-  svgHeight = $('#svg_container').height();
-  svgTopMargin = $('header').height();
-  svgElem = Raphael('svg_container', svgWidth, svgHeight);
+  var calculatedHorizontalScroll = -currentVerticalScroll * pagesWidth / bodyHeight;
 
-  circleMatrix = new Array(Math.ceil(svgWidth/BOX_WIDTH));
-  for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
-  {
-    var coorX = Circle.convertCoordinatesIntoMatrixIndex(x, null)[0];
-    circleMatrix[coorX] = new Array(Math.ceil((svgHeight - svgTopMargin)/BOX_WIDTH));
-    for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
-    {
-      coorY = Circle.convertCoordinatesIntoMatrixIndex(null, y)[1];
-      circleMatrix[coorX][coorY] = new Circle(x, y, svgElem);
-      circleMatrix[coorX][coorY].init();
-    }
+  var distanceToScroll = Math.abs(calculatedHorizontalScroll - targetHorizontalScroll);
+  var animationTime = distanceToScroll;
+
+  $('#pages_container').animate({'left': calculatedHorizontalScroll}, animationTime);
+  //$('#pages_container').css({'left': calculatedHorizontalScroll});
+
+  targetHorizontalScroll = calculatedHorizontalScroll;
+};
+
+function scrollStopped(){
+  var currentPage = Math.round(-targetHorizontalScroll / $('.page').width()) + 1;
+
+  gotoPage(currentPage);
+};
+
+function init(){
+  //Set the width of each page
+  $('.page').width(window.innerWidth);
+
+  //Load the SVG for each page
+  loadPage1();
+  loadPage2();
+  loadPage3();
+  loadPage4();
+  loadPage5();
+  loadPage6();
+  loadPage7();
+  loadPage8();
+};
+
+var lastStoredPage;
+function gotoPage(pageNumber){
+  switch(pageNumber){
+    case 1:
+      if(lastStoredPage != 1){
+        startPage1();
+        lastStoredPage = 1;
+      }
+      break;
+    case 2:
+      if(lastStoredPage != 2){
+        startPage2();
+        lastStoredPage = 2;
+      }
+      break;
+    case 3:
+      if(lastStoredPage != 3){
+        startPage3();
+        lastStoredPage = 3;
+      }
+      break;
+    case 4:
+      if(lastStoredPage != 4){
+        startPage4();
+        lastStoredPage = 4;
+      }
+      break;
+    case 5:
+      if(lastStoredPage != 5){
+        startPage5();
+        lastStoredPage = 5;
+      }
+      break;
+    case 6:
+      if(lastStoredPage != 6){
+        startPage6();
+        lastStoredPage = 6;
+      }
+      break;
+    case 7:
+      if(lastStoredPage != 7){
+        startPage7();
+        lastStoredPage = 7;
+      }
+      break;
+    case 8:
+      if(lastStoredPage != 8){
+        startPage8();
+        lastStoredPage = 8;
+      }
+      break;
   }
 
+  var page = $('#page_' + pageNumber);
+  var currentOffset = $('#pages_container').offset().left;
+  var pageOffset = page.offset().left;
+  //$('#pages_container').animate({'left': currentOffset - pageOffset}, 1000, function(){});
+
+  var bodyHeight = $('body').height();
+  var pagesWidth = $('.page').width() * $('.page').length;
+  var calculatedVerticalScroll = -(targetHorizontalScroll - pageOffset) * bodyHeight / pagesWidth;
+
+  $(window).scrollTop(calculatedVerticalScroll);
+}
+
+function stopAll(){
+  pauseSound();
+  clearInterval(page2IntervalTimer);
+  clearInterval(page3IntervalTimer);
+  clearInterval(page5IntervalTimer);
+  clearInterval(page6IntervalTimer);
+  clearInterval(page7IntervalTimer);
+};
+
+var circleMatrices = new Array(8);
+var circleMatrix;
+
+function loadPage1(){
+  loadSVGMatrix(1, true);
+
+  circleMatrix = circleMatrices[0];
+
+  //Replace random circle with AudioSource Circle
   var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
-  audioSourceCircle =  new AudioSourceCircle(replaceCircleForAudio.x, replaceCircleForAudio.y, svgElem);
+  var audioSourceCircle =  new AudioSourceCircle(replaceCircleForAudio.x, replaceCircleForAudio.y, replaceCircleForAudio.svgElem, replaceCircleForAudio.circleMatrix);
   audioSourceCircle.init();
+  audioSourceCircle.setupOnHover();
+  audioSourceCircle.setupOnClick();
+  audioSourceCircle.startBroadcast(1, 0.7);
+  var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
+  circleMatrix[coor[0]][coor[1]].remove();
+  circleMatrix[coor[0]][coor[1]] = audioSourceCircle;
+
+
+  //Start Sound
+  startSound(audioSourceCircle, $('#page_1 svg'));
 };
 
-function loadMainPage(){
-  cancelAllTimers();
-  hideAllPages();
+function loadPage2(){
+  loadSVGMatrix(2, false);
 
-  showAudioSourceCircle();
+  circleMatrix = circleMatrices[1];
 
-  hoverHandlerOn = true;
-  clickHandlerOn = true;
-
-  setRandomColors();
-
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      circleMatrix[x][y].show();
-      circleMatrix[x][y].reset();
-    }
-
-  audioContext = new webkitAudioContext();
-
-  //loadAudio();
-  //loadNoise();
-
-  $('svg').mousemove(function(e){
-    if(audioVolumeControl){
-      audioVolumeControl.gain.value = MAX_AUDIO_GAIN * (1 - Math.abs(e.clientX - audioSourceCircle.x)/svgWidth) * Math.max(0,(MAIN_PAGE_SCROLL_HEIGHT - $(document).scrollTop())/MAIN_PAGE_SCROLL_HEIGHT);
-    }
-    if(noiseVolumeControl){
-      noiseVolumeControl.gain.value = MAX_NOISE_GAIN * Math.abs(e.clientY - audioSourceCircle.y)/svgHeight * Math.max(0, (MAIN_PAGE_SCROLL_HEIGHT - $(document).scrollTop())/MAIN_PAGE_SCROLL_HEIGHT);
-    }
-  });
-};
-
-var pathQueue;
-var pageOneIntervalTimer;
-function loadPageOne(){
-  hideAllPages();
-  showPage(1);
-
-  setRandomColors();
-  resetNonAudioPages();
-  resetAllCircles();
-
-  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+  //Blur circles
+  var contentEl = $('#page_2 .content');
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
 
   for(var x = 0; x < circleMatrix.length; x++){
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      var blur = 5 * (rightPosOfText - x) / rightPosOfText;
+    for(var y = 0; y < circleMatrix[x].length; y++)
+    {
+
+      if(typeof circleMatrix[x][y] == 'undefined')
+        continue;
+
+      var blur = 5 * (rightPositionOfContentInBoxes - x) / rightPositionOfContentInBoxes;
       if(blur > 0)
         circleMatrix[x][y].blur(blur);
     }
   }
+}
 
-  //Choose a random circle
-  pathQueue = [];
-  pageOneIntervalTimer = setInterval(connectRandomCircle, 2000);
+function loadPage3(){
+  loadSVGMatrix(3, false);
+
+  circleMatrix = circleMatrices[2];
+}
+
+function loadPage4(){
+  loadSVGMatrix(4, false);
+
+  circleMatrix = circleMatrices[3];
 };
 
-function connectRandomCircle(){
-  if(pathQueue.length > 5){
-    var removedPathArr = pathQueue.shift();
-    removedPathArr[0].removePath(removedPathArr[2], removedPathArr[1]);
+function loadPage5(){
+  loadSVGMatrix(5, false);
+
+  circleMatrix = circleMatrices[4];
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    var hideLength = Math.floor(circleMatrix[x].length*Math.random()) - 1;
+
+    for(var y = 0; y <hideLength; y++){
+      if(typeof circleMatrix[x][y] != 'undefined')
+        circleMatrix[x][y].hide();
+    }
   }
+};
 
-  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
-  var newConnectedCircle = getRandomVisibleCircle(rightPosOfText, 0, circleMatrix.length - rightPosOfText, circleMatrix[0].length);
+function loadPage6(){
+  loadSVGMatrix(6, false);
 
-  var connectFromCircle;
-  if(pathQueue.length == 0){
-    connectFromCircle = getRandomVisibleCircle(rightPosOfText, 0, circleMatrix.length - rightPosOfText, circleMatrix[0].length);
+  circleMatrix = circleMatrices[5];
+
+  resetPage6();
+};
+
+function loadPage7(){
+  loadSVGMatrix(7, false);
+
+  circleMatrix = circleMatrices[6];
+
+  var contentEl = $('#page_7 .content');
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
+
+  for(var x = circleMatrix.length - 1; x >= 0 ; x--)
+  {
+
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      if(typeof circleMatrix[x][y] == 'undefined')
+        continue;
+
+      if(x < rightPositionOfContentInBoxes)
+      {
+        circleMatrix[x][y].setInnerColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);;
+        circleMatrix[x][y].setOuterColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);
+
+        if(circleMatrix[x][y].isVisible() && (
+            y == 0 ||
+            x == circleMatrix.length - 1 ||
+            typeof circleMatrix[x][y-1] == 'undefined' ||
+            !circleMatrix[x][y-1].isVisible() ||
+            typeof circleMatrix[x+1][y] == 'undefined' ||
+            !circleMatrix[x+1][y].isVisible() ||
+            typeof circleMatrix[x+1][y-1] == 'undefined' ||
+            !circleMatrix[x+1][y -1].isVisible()
+          ))
+        {
+          circleMatrix[x][y].colorOn();
+        }
+        else
+          circleMatrix[x][y].colorOff();
+      }
+      else if(x == rightPositionOfContentInBoxes)
+        circleMatrix[x][y].hide();
+      else{
+        circleMatrix[x][y].setInnerColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);;
+        circleMatrix[x][y].setOuterColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);
+        circleMatrix[x][y].colorOff();
+      }
+    }
   }
-  else{
-    connectFromCircle = pathQueue[pathQueue.length - 1][1]
-  }
+};
 
-  var path = connectFromCircle.connectNeighbourWithArc(newConnectedCircle);
+function loadPage8(){
+  loadSVGMatrix(8, false);
 
-  pathQueue.push([connectFromCircle, newConnectedCircle, path]);
+  circleMatrix = circleMatrices[2];
+};
+
+function startPage1(){
+  stopAll();
+
+  circleMatrix = circleMatrices[0];
+
+  playSound();
+};
+
+var pathQueue;
+var page2IntervalTimer;
+function startPage2(){
+  stopAll();
+
+  circleMatrix = circleMatrices[1];
+
+  pathQueue = [];
+  page2IntervalTimer = setInterval(connectRandomCircle, 2000);
 };
 
 var bubbleArray;
-var pageTwoIntervalTimer;
-function loadPageTwo(){
-  hideAllPages();
-  showPage(2);
+var page3IntervalTimer;
+function startPage3(){
+  stopAll();
 
-  setRandomColors();
-  resetNonAudioPages();
-  resetAllCircles();
+  circleMatrix = circleMatrices[2];
 
   //Bubble from bottom to top
   bubbleArray = new Array(circleMatrix.length);
-  pageTwoIntervalTimer = setInterval(bubbleToTop, 500);
+  page3IntervalTimer = setInterval(bubbleToTop, 500);
+};
+
+function startPage4(){
+  stopAll();
+
+  circleMatrix = circleMatrices[3];
+
+
+  if(typeof circleMatrix[4][3] != 'undefined'){
+    circleMatrix[4][3].grow(3, 1500);
+    circleMatrix[4][3].callOnNeighbours(1, function(){
+      this.innerCircle.stop().animate({'opacity': 0}, 1500);
+      this.outerCircle.stop().animate({'opacity': 0}, 1500);
+    });
+  }
+
+  if(typeof circleMatrix[9][1] != 'undefined'){
+    circleMatrix[9][1].grow(3, 1500);
+    circleMatrix[9][1].callOnNeighbours(1, function(){
+      this.innerCircle.stop().animate({'opacity': 0}, 1500);
+      this.outerCircle.stop().animate({'opacity': 0}, 1500);
+    });
+  }
+
+  circleMatrix[4][3].startBroadcast(1, 0.7, 1000);
+  circleMatrix[9][1].startBroadcast(1, 0.7, 1000);
+};
+
+var currentColoredColumnIndex;
+var page5IntervalTimer;
+function startPage5(){
+  stopAll();
+
+  circleMatrix = circleMatrices[4];
+
+  currentColoredColumnIndex = undefined;
+  page5IntervalTimer = setInterval(colorColumn, 1500);
+};
+
+var swappedInnerRadiuses;
+var page6IntervalTimer;
+function startPage6(){
+  stopAll();
+
+  circleMatrix = circleMatrices[5];
+
+  resetPage6();
+
+  swapRandomInnerRadiuses();
+
+  page6IntervalTimer = setTimeout(returnSwappedRadiuses, 5000);
+};
+
+var page7IntervalTimer;
+function startPage7(){
+  stopAll();
+
+  circleMatrix = circleMatrices[6];
+
+  page7IntervalTimer = setInterval(swapCircles, 2000);
+};
+
+function startPage8(){
+  stopAll();
+
+  circleMatrix = circleMatrices[7];
+
+  var hideHeight, innerColor, outerColor;
+  for(var x = 0; x < circleMatrix.length; x++){
+    if(x < Math.floor(circleMatrix.length/3)){
+      hideHeight = 4;
+      innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+      outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+      delay = 2000;
+    }
+    else if(x < 2*Math.floor(circleMatrix.length/3)){
+      hideHeight = 2;
+      innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+      outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+      delay = 8000;
+    }
+    else{
+      hideHeight = 0;
+      innerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+      outerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+      delay = 14000;
+    }
+
+    for(var y = 0; y < hideHeight; y++)
+      if(typeof circleMatrix[x][y] != 'undefined')
+        circleMatrix[x][y].hide();
+
+    if(typeof circleMatrix[x][hideHeight] == 'undefined' || hideHeight == circleMatrix[x].length)
+      continue;
+
+    circleMatrix[x][hideHeight].setInnerColor(innerColor);
+    circleMatrix[x][hideHeight].setOuterColor(outerColor);
+
+    circleMatrix[x][hideHeight].colorOn(1, delay);
+  }
+};
+
+function resetPage6(){
+  circleMatrix = circleMatrices[5];
+
+  //Split the screen width in 3 and set size of innerRadius accordingly
+  for(var x = 0; x < circleMatrix.length; x++){
+    var innerRadius;
+    if(x < Math.floor(circleMatrix.length/3)) innerRadius = 10;
+    else if(x < 2*Math.floor(circleMatrix.length/3)) innerRadius = 25;
+    else innerRadius = 17;
+
+    for(var y = 0; y < circleMatrix[x].length; y++)
+      if(typeof circleMatrix[x][y] != 'undefined')
+        circleMatrix[x][y].setInnerRadius(innerRadius);
+  }
 };
 
 function bubbleToTop(){
@@ -200,7 +423,7 @@ function bubbleToTop(){
     else{
       var currentYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, currentBubble.y)[1];
 
-      if(currentYIndex == 0 || !circleMatrix[x][currentYIndex - 1].isVisible()){
+      if(currentYIndex == 0 || typeof circleMatrix[x][currentYIndex - 1] == 'undefined' || !circleMatrix[x][currentYIndex - 1].isVisible()){
         nextBubble = undefined;
       }
       else
@@ -214,7 +437,7 @@ function bubbleToTop(){
 
       var nextYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, nextBubble.y)[1];
 
-      if(0 == nextYIndex || !circleMatrix[x][nextYIndex].isVisible())
+      if(0 == nextYIndex  || typeof circleMatrix[x][nextYIndex] == 'undefined' || !circleMatrix[x][nextYIndex].isVisible())
         nextBubble.sendBroadcast(1, 0.7)
     }
 
@@ -222,54 +445,11 @@ function bubbleToTop(){
   }
 };
 
-function loadPageThree(){
-  hideAllPages();
-  showPage(3);
-
-  setRandomColors();
-  resetNonAudioPages();
-  resetAllCircles();
-
-  circleMatrix[4][3].grow(3, 1500);
-  circleMatrix[4][3].callOnNeighbours(1, function(){
-    this.innerCircle.stop().animate({'opacity': 0}, 1500);
-    this.outerCircle.stop().animate({'opacity': 0}, 1500);
-  });
-  circleMatrix[4][3].startBroadcast(1, 0.7, 1000);
-
-  circleMatrix[9][1].grow(3, 1500);
-  circleMatrix[9][1].callOnNeighbours(1, function(){
-    this.innerCircle.stop().animate({'opacity': 0}, 1500);
-    this.outerCircle.stop().animate({'opacity': 0}, 1500);
-  });
-  circleMatrix[9][1].startBroadcast(1, 0.7, 1000);
-};
-
-var currentColoredColumnIndex;
-var pageFourIntervalTimer;
-function loadPageFour(){
-  hideAllPages();
-  showPage(4);
-
-  resetNonAudioPages();
-  resetAllCircles();
-  setRandomColors();
-
-  for(var x = 0; x < circleMatrix.length; x++){
-    var hideLength = Math.floor(circleMatrix[x].length*Math.random()) - 1;
-
-    for(var y = 0; y <hideLength; y++)
-      circleMatrix[x][y].hide();
-  }
-
-  currentColoredColumnIndex = undefined;
-  pageFourIntervalTimer = setInterval(colorColumn, 1500);
-};
-
 function colorColumn(){
   if(typeof currentColoredColumnIndex != 'undefined'){
     for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
-      circleMatrix[currentColoredColumnIndex][y].colorOff();
+      if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined')
+        circleMatrix[currentColoredColumnIndex][y].colorOff();
     }
 
     currentColoredColumnIndex = currentColoredColumnIndex + 1
@@ -282,35 +462,6 @@ function colorColumn(){
     if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined' && circleMatrix[currentColoredColumnIndex][y].isVisible())
       circleMatrix[currentColoredColumnIndex][y].colorOn();
   }
-};
-
-var swappedInnerRadiuses;
-var pageFiveIntervalTimer;
-
-function loadPageFive(){
-  hideAllPages();
-  showPage(5);
-
-  resetNonAudioPages();
-
-  //Split the screen width in 3 and set size of innerRadius accordingly
-  for(var x = 0; x < circleMatrix.length; x++){
-    var innerRadius;
-    if(x < Math.floor(circleMatrix.length/3)) innerRadius = 10;
-    else if(x < 2*Math.floor(circleMatrix.length/3)) innerRadius = 25;
-    else innerRadius = 17;
-
-    for(var y = 0; y < circleMatrix[x].length; y++)
-      circleMatrix[x][y].setInnerRadius(innerRadius);
-  }
-
-  swapRandomInnerRadiuses();
-
-  setRandomColors();
-  resetAllCircles();
-
-  //returnSwappedRadiuses();
-  pageFiveIntervalTimer = setTimeout(returnSwappedRadiuses, 5000);
 };
 
 function returnSwappedRadiuses(){
@@ -361,7 +512,7 @@ function returnSwappedRadiuses(){
 
   swappedInnerRadiuses.splice(randomIndex, 1);
 
-  pageFiveIntervalTimer = setTimeout(returnSwappedRadiuses, 7000);
+  page6IntervalTimer = setTimeout(returnSwappedRadiuses, 7000);
 }
 
 function swapRandomInnerRadiuses(){
@@ -400,63 +551,11 @@ function swapRandomInnerRadiuses(){
   }
 };
 
-function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
-    while(true){
-      var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
-
-      if(randomCircle.isVisible() && randomCircle.currentInnerRadius() == unSwappedRadius)
-        return randomCircle;
-    }
-};
-
-var pageSixIntervalTimer;
-function loadPageSix(){
-  hideAllPages();
-  showPage(6);
-
-  resetNonAudioPages();
-
-  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
-
-  for(var x = circleMatrix.length - 1; x >= 0 ; x--)
-  {
-    if(x < rightPosOfText)
-    {
-      for(var y = 0; y < circleMatrix[x].length; y++)
-      {
-        circleMatrix[x][y].setInnerColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);;
-        circleMatrix[x][y].setOuterColor(RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())]);
-
-        if(circleMatrix[x][y].isVisible() &&
-          (y == 0 || x == circleMatrix.length - 1 || !circleMatrix[x][y-1].isVisible() || !circleMatrix[x+1][y].isVisible() || !circleMatrix[x+1][y -1].isVisible()))
-        {
-          circleMatrix[x][y].colorOn();
-          firstVisible = false;
-        }
-        else{
-          circleMatrix[x][y].colorOff();
-        }
-      }
-    }
-    else if(x == rightPosOfText)
-      for(var y = 0; y < circleMatrix[x].length; y++)
-        circleMatrix[x][y].hide();
-    else{
-      for(var y = 0; y < circleMatrix[x].length; y++){
-        circleMatrix[x][y].setInnerColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);;
-        circleMatrix[x][y].setOuterColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);
-        circleMatrix[x][y].colorOff();
-      }
-    }
-  }
-
-  pageSixIntervalTimer = setInterval(swapCircles, 2000);
-};
-
 function swapCircles(){
-  var rightPosOfText = Math.ceil(($('#content_container').offset().left + $('.page.active').first().width()) / BOX_WIDTH);
+  var contentEl = $('#page_7 .content');
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
 
-  var circle1 = getRandomCircle(rightPosOfText + 1, 0, circleMatrix.length - rightPosOfText - 1, circleMatrix[0].length);
+  var circle1 = getRandomCircle(rightPositionOfContentInBoxes + 1, 0, circleMatrix.length - rightPositionOfContentInBoxes - 1, circleMatrix[0].length);
   circle1.svgSet.toFront();
   var circle1X = circle1.x, circle1Y = circle1.y;
   var circle1Coor = Circle.convertCoordinatesIntoMatrixIndex(circle1X, circle1Y);
@@ -501,83 +600,67 @@ function swapCircles(){
   circle2.x = circle1X;
   circle2.y = circle1Y;
   circleMatrix[circle1Coor[0]][circle1Coor[1]] = circle2;
-}
+};
 
-function loadPageSeven(){
-  hideAllPages();
-  showPage(7);
+function loadSVGMatrix(pageNumber, handlerOn){
+  var svgWidth = $('#page_' + pageNumber).width();
+  var svgHeight = $('#page_' + pageNumber).height();
+  var svgTopMargin = $('header').height();
+  var svgElem = Raphael($('#page_' + pageNumber + ' .svg')[0], svgWidth, svgHeight);
 
-  resetNonAudioPages();
-  resetAllCircles();
+  var contentEl = $('#page_' + pageNumber + ' .content');
+  if(contentEl.length > 0){
+    var leftContentOffsetInBoxes = getLeftPositionOfContentInBoxes(pageNumber);
+    var contentWidthInBoxes = Math.ceil(contentEl.width() / BOX_WIDTH);
+    var contentHeightInBoxes = Math.ceil(contentEl.height() / BOX_WIDTH);
+  }
 
-  for(var x = 0; x < circleMatrix.length; x++){
-    var hideHeight, innerColor, outerColor;
-    if(x < Math.floor(circleMatrix.length/3)){
-      hideHeight = 4;
-      innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
-      outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
-      delay = 2000;
+  var circleMatrix = circleMatrices[pageNumber - 1] = new Array(Math.ceil(svgWidth/BOX_WIDTH));
+
+  for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
+  {
+    var coorX = Circle.convertCoordinatesIntoMatrixIndex(x, null)[0];
+    circleMatrix[coorX] = new Array(Math.ceil((svgHeight - svgTopMargin)/BOX_WIDTH));
+
+    for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
+    {
+      coorY = Circle.convertCoordinatesIntoMatrixIndex(null, y)[1];
+
+      if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes)
+        continue;
+
+      circleMatrix[coorX][coorY] = new Circle(x, y, svgElem, circleMatrix);
+      circleMatrix[coorX][coorY].init();
+      if(handlerOn){
+        circleMatrix[coorX][coorY].setupOnHover();
+        circleMatrix[coorX][coorY].setupOnClick();
+      }
     }
-    else if(x < 2*Math.floor(circleMatrix.length/3)){
-      hideHeight = 2;
-      innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
-      outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
-      delay = 8000;
-    }
-    else{
-      hideHeight = 0;
-      innerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
-      outerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
-      delay = 14000;
-    }
-
-    for(var y = 0; y < hideHeight; y++)
-      circleMatrix[x][y].hide();
-
-    if(hideHeight == circleMatrix[x].length)
-      continue;
-
-    circleMatrix[x][hideHeight].setInnerColor(innerColor);
-    circleMatrix[x][hideHeight].setOuterColor(outerColor);
-
-    circleMatrix[x][hideHeight].colorOn(1, delay);
   }
 };
 
+function connectRandomCircle(){
+  if(pathQueue.length > 5){
+    var removedPathArr = pathQueue.shift();
+    removedPathArr[0].removePath(removedPathArr[2], removedPathArr[1]);
+  }
 
-function resetNonAudioPages(){
-  cancelAllTimers();
+  var contentEl = $('#page_2 .content');
+  var rightPositionOfContentInBoxes = getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
 
-  hideAudioSourceCircle();
+  var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
 
-  hoverHandlerOn = false;
-  clickHandlerOn = false;
+  var connectFromCircle;
+  if(pathQueue.length == 0){
+    connectFromCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+  }
+  else{
+    connectFromCircle = pathQueue[pathQueue.length - 1][1]
+  }
 
-  var leftTextOffsetInBoxes = Math.floor($('#content_container').offset().left / BOX_WIDTH);
-  var textWidthInBoxes = Math.ceil($('.page.active').first().width() / BOX_WIDTH);
-  var textHeightInBoxes = Math.ceil($('.page.active').first().height() / BOX_WIDTH);
+  var path = connectFromCircle.connectNeighbourWithArc(newConnectedCircle);
 
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      if(x >= leftTextOffsetInBoxes && x < leftTextOffsetInBoxes + textWidthInBoxes && y < textHeightInBoxes)
-        circleMatrix[x][y].hide();
-      else
-        circleMatrix[x][y].show();
-    }
-};
-
-function resetAllCircles(){
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++)
-        circleMatrix[x][y].reset();
-};
-
-function setRandomColors(){
-  for(var x = 0; x < circleMatrix.length; x++)
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      circleMatrix[x][y].setInnerColor();
-      circleMatrix[x][y].setOuterColor();
-    }
+  pathQueue.push([connectFromCircle, newConnectedCircle, path]);
 };
 
 function getRandomCircle(xOffset, yOffset, width, height){
@@ -595,40 +678,17 @@ function getRandomVisibleCircle(xOffset, yOffset, width, height){
   }
 };
 
-function hideAllPages(){
-  $('.page').removeClass('active');
+function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
+    while(true){
+      var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
+
+      if(typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.currentInnerRadius() == unSwappedRadius)
+        return randomCircle;
+    }
 };
 
-function showPage(pageNumber){
-  $('#page_' + pageNumber).addClass('active');
+
+function getLeftPositionOfContentInBoxes(pageNumber){
+  return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / BOX_WIDTH);
 }
 
-function cancelAllTimers(){
-  clearInterval(pageOneIntervalTimer);
-  clearInterval(pageTwoIntervalTimer);
-  clearInterval(pageFourIntervalTimer);
-  clearInterval(pageFiveIntervalTimer);
-  clearInterval(pageSixIntervalTimer);
-};
-
-function hideAudioSourceCircle(){
-  audioSourceCircle.hide();
-  audioSourceCircle.stopBroadcast();
-
-  var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
-  if(circleMatrix[coor[0]][coor[1]] instanceof AudioSourceCircle){
-    circleMatrix[coor[0]][coor[1]] = new Circle(audioSourceCircle.x, audioSourceCircle.y, svgElem);
-    circleMatrix[coor[0]][coor[1]].init();
-  }
-};
-
-function showAudioSourceCircle(){
-  audioSourceCircle.show();
-  audioSourceCircle.startBroadcast(1, 0.7);
-
-  var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
-  if(!(circleMatrix[coor[0]][coor[1]] instanceof AudioSourceCircle)){
-    circleMatrix[coor[0]][coor[1]].remove();
-    circleMatrix[coor[0]][coor[1]] = audioSourceCircle;
-  }
-};

@@ -1,5 +1,3 @@
-var svgElem;
-
 Raphael.fn.arrow = function (x, y, length, height, width) {
   return this.path(
     "M" + x + " " + y +
@@ -66,10 +64,11 @@ Raphael.fn.arrow = function (x, y, length, height, width) {
     }
 })();
 
-function Circle(x, y, svgEl) {
+function Circle(x, y, svgEl, circleMatrix) {
   this.x = x;
   this.y = y;
-  svgElem = svgEl;
+  this.svgElem = svgEl;
+  this.circleMatrix = circleMatrix;
 };
 
 Circle.prototype.init = function(){
@@ -78,8 +77,8 @@ Circle.prototype.init = function(){
   this.setInnerRadius();
 
   this.draw();
-  this.setupOnHover();
-  this.setupOnClick();
+//  this.setupOnHover();
+//  this.setupOnClick();
 };
 
 Circle.convertCoordinatesIntoMatrixIndex = function(x, y){
@@ -172,24 +171,24 @@ Circle.prototype.unblur = function(){
 
 
 Circle.prototype.draw = function(){
-  this.innerCircle = svgElem.circle(this.x, this.y, this.innerCircleRadius);
+  this.innerCircle = this.svgElem.circle(this.x, this.y, this.innerCircleRadius);
   this.innerCircle.attr({
     stroke: "none",
     fill: "E0DCDC"
   });
 
-  this.outerCircle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS);
+  this.outerCircle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS);
   this.outerCircle.attr({
     "stroke": "E0DCDC",
     "stroke-width": OUTER_CIRCLE_STROKE_WIDTH
   });
 
-  hoverArea = svgElem.rect(this.x - BOX_WIDTH/2, this.y-BOX_WIDTH/2, BOX_WIDTH, BOX_WIDTH);
+  hoverArea = this.svgElem.rect(this.x - BOX_WIDTH/2, this.y-BOX_WIDTH/2, BOX_WIDTH, BOX_WIDTH);
   hoverArea.attr({stroke: "none",
           fill:   "#f00",
           "fill-opacity": 0});
 
-  this.svgSet = svgElem.set();
+  this.svgSet = this.svgElem.set();
   this.svgSet.push(this.outerCircle, this.innerCircle, hoverArea);
 };
 
@@ -231,7 +230,7 @@ Circle.prototype.colorOff = function(delay){
 };
 
 Circle.prototype.connectNeighbourWithArc = function(neighbour){
-  var path =svgElem.path("M" + this.x + " " + this.y);
+  var path = this.svgElem.path("M" + this.x + " " + this.y);
   path.attr('stroke', CONNECT_COLOR);
 
   neighbour.innerCircle.toFront();
@@ -253,7 +252,7 @@ Circle.prototype.connectNeighbourWithArc = function(neighbour){
 };
 
 Circle.prototype.connectNeighbourWithLine = function(neighbour){
-  var path =svgElem.path("M" + this.x + " " + this.y);
+  var path = this.svgElem.path("M" + this.x + " " + this.y);
   path.attr('stroke', CONNECT_COLOR);
 
   neighbour.innerCircle.toFront();
@@ -380,7 +379,7 @@ Circle.prototype.sendBroadcast = function(numberOfNeighbours, opacity){
   opacity = opacity || 1;
 
   var pos = this.currentPosition();
-  var broadcastCircle = svgElem.circle(pos[0], pos[1], this.currentOuterRadius());
+  var broadcastCircle = this.svgElem.circle(pos[0], pos[1], this.currentOuterRadius());
   broadcastCircle.attr({
     "stroke": this.outerCircle.attr('stroke'),
     "stroke-width": BROADCAST_STROKE_WIDTH,
@@ -433,14 +432,14 @@ Circle.prototype.callOnNeighbours = function(maxDegreesOfSeperation, functionToC
 
   //STARTING TOP LEFT CORNER OF NEIGHBOURS, LOOP THROUGH EACH LEVEL
   for(var xLevel = -maxDegreesOfSeperation; xLevel <= maxDegreesOfSeperation; xLevel++){
-    if(xIndex + xLevel < 0 || xIndex + xLevel > circleMatrix.length - 1 || typeof circleMatrix[xIndex + xLevel] == 'undefined') continue;
+    if(xIndex + xLevel < 0 || xIndex + xLevel > this.circleMatrix.length - 1 || typeof this.circleMatrix[xIndex + xLevel] == 'undefined') continue;
 
     for(var yLevel = -maxDegreesOfSeperation; yLevel <= maxDegreesOfSeperation; yLevel++){
-      if(yIndex + yLevel < 0 || yIndex + yLevel > circleMatrix[xIndex + xLevel].length - 1 || typeof circleMatrix[xIndex + xLevel][yIndex + yLevel] == 'undefined') continue;
+      if(yIndex + yLevel < 0 || yIndex + yLevel > this.circleMatrix[xIndex + xLevel].length - 1 || typeof this.circleMatrix[xIndex + xLevel][yIndex + yLevel] == 'undefined') continue;
 
       if(xLevel == 0 && yLevel == 0) continue;
 
-      functionToCall.apply(circleMatrix[xIndex + xLevel][yIndex + yLevel], args);
+      functionToCall.apply(this.circleMatrix[xIndex + xLevel][yIndex + yLevel], args);
     }
   }
 };
@@ -477,8 +476,8 @@ Circle.prototype.vibrateOff = function(delay){
   this.svgSet.stop(this.vibrateAnimation);
 };
 
-function AudioSourceCircle(x, y, svgEl){
-  Circle.call(this, x, y, svgEl);
+function AudioSourceCircle(x, y, svgEl, circleMatrix){
+  Circle.call(this, x, y, svgEl, circleMatrix);
 };
 
 AudioSourceCircle.prototype = new Circle();
@@ -495,63 +494,63 @@ AudioSourceCircle.prototype.init = function(){
 };
 
 AudioSourceCircle.prototype.draw = function(){
-  this.svgSet = svgElem.set();
-  this.onHoverSet = svgElem.set();
-  this.normalSet = svgElem.set();
+  this.svgSet = this.svgElem.set();
+  this.onHoverSet = this.svgElem.set();
+  this.normalSet = this.svgElem.set();
 
-  this.innerCircle = svgElem.circle(this.x, this.y, this.innerCircleRadius);
+  this.innerCircle = this.svgElem.circle(this.x, this.y, this.innerCircleRadius);
   this.innerCircle.attr({stroke: "none", fill: "E0DCDC"});
   this.svgSet.push(this.innerCircle);
   this.onHoverSet.push(this.innerCircle);
   this.normalSet.push(this.innerCircle);
 
-  this.outerCircle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS);
+  this.outerCircle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS);
   this.outerCircle.attr({"stroke": "E0DCDC", "stroke-width": OUTER_CIRCLE_STROKE_WIDTH});
   this.svgSet.push(this.outerCircle);
   this.normalSet.push(this.outerCircle);
 
-  var circle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS + 10);
+  var circle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS + 10);
   circle.attr({"stroke": COLORS[1], "stroke-width": 1});
   circle.hide();
   this.svgSet.push(circle);
   this.onHoverSet.push(circle);
 
-  circle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+13);
+  circle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+13);
   circle.attr({"stroke": COLORS[1], "stroke-width": 2});
   circle.hide();
   this.svgSet.push(circle);
   this.onHoverSet.push(circle);
 
-  circle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+20);
+  circle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+20);
   circle.attr({"stroke": COLORS[1], "stroke-width": 3, 'opacity': 0.5});
   circle.hide();
   this.svgSet.push(circle);
   this.onHoverSet.push(circle);
 
-  circle = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+25);
+  circle = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+25);
   circle.attr({"stroke": COLORS[1], "stroke-width": 1, 'opacity': 0.5});
   circle.hide();
   this.svgSet.push(circle);
   this.onHoverSet.push(circle);
 
-  this.outerCircleOnHover = svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+35);
+  this.outerCircleOnHover = this.svgElem.circle(this.x, this.y, OUTER_CIRCLE_RADIUS+35);
   this.outerCircleOnHover.attr({"stroke": COLORS[1], "stroke-width": 1, 'opacity': 0.2});
   this.outerCircleOnHover.hide();
   this.svgSet.push(this.outerCircleOnHover);
   this.onHoverSet.push(this.outerCircleOnHover);
 
-  hoverArea = svgElem.rect(this.x - BOX_WIDTH/2, this.y-BOX_WIDTH/2, BOX_WIDTH, BOX_WIDTH);
+  hoverArea = this.svgElem.rect(this.x - BOX_WIDTH/2, this.y-BOX_WIDTH/2, BOX_WIDTH, BOX_WIDTH);
   hoverArea.attr({stroke: "none", fill:   "#f00", "fill-opacity": 0});
   this.svgSet.push(hoverArea);
   this.normalSet.push(hoverArea);
   this.onHoverSet.push(hoverArea);
 
-  this.arrowSet = svgElem.set();
-  var arrow = svgElem.arrow(this.x + BOX_WIDTH - 10, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
+  this.arrowSet = this.svgElem.set();
+  var arrow = this.svgElem.arrow(this.x + BOX_WIDTH - 10, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
   this.arrowSet.push(arrow);
   this.svgSet.push(arrow);
 
-  arrow = svgElem.arrow(this.x + BOX_WIDTH - 25, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
+  arrow = this.svgElem.arrow(this.x + BOX_WIDTH - 25, this.y, 20, 70, 10).attr({'fill': '#000', opacity: 0});
   this.arrowSet.push(arrow);
   this.svgSet.push(arrow);
 
@@ -571,13 +570,12 @@ AudioSourceCircle.prototype.setupOnHover = function(){
   this.svgSet.hover(function(){
    if(!hoverHandlerOn) return
 
-   // that.onMouseEnter();
-   that.onClick();
+   that.onMouseEnter();
   },
   function(){
     if(!hoverHandlerOn) return
 
-    if(that.clickOn) that.resetNeighbours();
+    that.resetNeighbours();
     that.reset();
   });
 };
@@ -592,13 +590,7 @@ AudioSourceCircle.prototype.setupOnClick = function(){
 };
 
 AudioSourceCircle.prototype.onClick = function(){
-  this.onMouseEnter();
-
-  this.clickOn = true;
-//  this.innerCircle.stop().animate({r: this.innerCircleRadius - CLICK_DECREASE_IN_RADIUS}, CLICK_TIME);
-  this.arrowSet.stop().animate({opacity: 1}, BROADCAST_NEIGHBOUR_MOVE_TIME);
-
-  this.pushNeighbours(BOX_WIDTH + OUTER_CIRCLE_RADIUS);
+  gotoPage(2);
 };
 
 AudioSourceCircle.prototype.onMouseEnter = function(){
@@ -607,9 +599,13 @@ AudioSourceCircle.prototype.onMouseEnter = function(){
 
   this.svgSet.stop();
 
+  this.arrowSet.stop().animate({opacity: 1}, BROADCAST_NEIGHBOUR_MOVE_TIME);
+
+  this.pushNeighbours(BOX_WIDTH + OUTER_CIRCLE_RADIUS);
+
   this.colorOn();
 
-  this.startBroadcast(3, 0.7);
+  this.startBroadcast(2, 0.7);
 };
 
 AudioSourceCircle.prototype.reset = function(){

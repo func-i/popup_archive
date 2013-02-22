@@ -9,90 +9,164 @@
     <style>
       body{
         background: #F2EFEF;
-        height: 6000px;
+        height: 10000px;
         color: #7c7b81;
+        margin-left: 10px;
+        margin-right: 10px;
       }
-      #svg_container{
+      #fixed_holder{
         position: fixed;
         left: 0;
         top: 0;
         right: 0;
         bottom: 0;
         z-index: 0;
-        /*margin-top: 220px;*/
       }
-      #centerer_container{
+      header{
+        height: 220px;
+        width: 820px;
         margin: 0 auto;
+        z-index: 1;
+      }
+      #pages_viewer{
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 0;
+        overflow: hidden;
+      }
+      #pages_container{
+        width: 50000px;
+        position: relative;
+        left: 0;
+        top: 0;
+      }
+      .page{
+        float: left;
+        position: relative;
+        height: 100%;
+        width: 2200px; /*TMP*/
+      }
+      .page .svg{
+        position: absolute;
+        z-index: 0;
+        left: 0;
+        top: 0;
+      }
+      .page .content-holder{
+        margin-top: 220px;
+        margin-left: auto;
+        margin-right: auto;
         width: 840px;
         position: relative;
         z-index: 1;
       }
-      #content_container{
-        width: 820px;
-        margin: 10px;
-        position: fixed;
-      }
-      header{
-        height: 220px;
-      }
-      .page{
+      .page .content{
+        margin-left: 10px;
+        margin-right: 10px;
         width: 450px;
         color: #AD4278;
-        display: none;
-      }
-      .page.active{
-        display: block;
       }
     </style>
 
   </head>
   <body>
-    <div id="centerer_container">
-      <div id="content_container">
-        <header>
+    <div id="fixed_holder">
+      <header>
+        Hello Header
+      </header>
 
-        </header>
+    <div id="pages_viewer">
+      <div id="pages_container">
+
         <div class="page" id="page_1">
-          <h1>PAGE 1 Journalists, broadcasters, & producers</h1>
-          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+          <div class="svg"></div>
         </div>
 
         <div class="page" id="page_2">
-          <h1>PAGE 2 Journalists, broadcasters, & producers</h1>
-          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 2 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
-                <div class="page" id="page_3">
-          <h1>PAGE 3Journalists, broadcasters, & producers</h1>
-          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+        <div class="page" id="page_3">
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 3 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
-                <div class="page" id="page_4">
-          <h1>PAGE 4 Journalists, broadcasters, & producers</h1>
+        <div class="page" id="page_4">
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 4 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
-                <div class="page" id="page_5">
-          <p>PAGE 5 You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+        <div class="page" id="page_5">
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 5 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
-                <div class="page" id="page_6">
-          <h1>PAGE 6 Journalists, broadcasters, & producers</h1>
-          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+        <div class="page" id="page_6">
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 6 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
         <div class="page" id="page_7">
-          <h1>PAGE 7 Journalists, broadcasters, & producers</h1>
-          <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 7 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="page" id="page_8">
+          <div class="svg"></div>
+
+          <div class="content-holder">
+            <div class="content">
+              <h1>PAGE 8 Journalists, broadcasters, & producers</h1>
+              <p>You record and tell stories — you don’t archive them. But memories fade, and material can easily get lost or degrade. When it’s easy to archive, it’s easy to find the threads that create stories.</p>
+            </div>
+          </div>
         </div>
 
       </div>
     </div>
 
-        <div id="svg_container"></div>
-
     <script>
 
-var audioContext, audioVolumeControl, noiseVolumeControl;
 var hoverHandlerOn = true, clickHandlerOn = true;
 var MAX_NOISE_GAIN = 0.5;
 var MAX_AUDIO_GAIN = 1;
@@ -121,8 +195,8 @@ var BROADCAST_NEIGHBOUR_OPACITY = 0.4;
 var BROADCAST_NEIGHBOUR_MOVE_TIME = 1000;
 
 $(function(){
-  initSVG();
-  loadMainPage();
+  //initSVG();
+  //loadMainPage();
 });
     </script>
     <script type="text/javascript" src="circle.js"></script>

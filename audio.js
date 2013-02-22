@@ -1,3 +1,38 @@
+var audioContext, audioSource, audioVolumeControl, noiseSource, noiseVolumeControl;
+
+function startSound(audioSourceCircle, svgElem){
+  audioContext = new webkitAudioContext();
+  loadAudio();
+  loadNoise();
+
+  $(svgElem).mousemove(function(e){
+    if(audioVolumeControl){
+      audioVolumeControl.gain.value = MAX_AUDIO_GAIN * (1 - Math.abs(e.clientX - audioSourceCircle.x)/$(svgElem).width()) * Math.max(0,(800 - $(document).scrollTop())/800);
+    }
+    if(noiseVolumeControl){
+      noiseVolumeControl.gain.value = MAX_NOISE_GAIN * Math.abs(e.clientY - audioSourceCircle.y)/$(svgElem).height() * Math.max(0, (800 - $(document).scrollTop())/800);
+    }
+  });
+};
+
+function pauseSound(){
+    if(audioVolumeControl){
+      audioVolumeControl.gain.value = 0;
+    }
+    if(noiseVolumeControl){
+      noiseVolumeControl.gain.value = 0;
+    }
+};
+
+function playSound(){
+    if(audioVolumeControl){
+      audioVolumeControl.gain.value = 1;
+    }
+    if(noiseVolumeControl){
+      noiseVolumeControl.gain.value = 0;
+    }
+};
+
 function loadAudio(){
   var request = new XMLHttpRequest();
   request.open('get',
@@ -9,7 +44,8 @@ function loadAudio(){
     audioContext.decodeAudioData(
       request.response,
       function(incomingBuffer) {
-        playAudio(incomingBuffer); // Not defined yet
+        connectAudio(incomingBuffer); // Not defined yet
+        audioSource.noteOn(0);
       },
       function (e) {console.log(e);}
     );
@@ -17,16 +53,14 @@ function loadAudio(){
   request.send();
 };
 
-function playAudio(buffer) {
-  var source = audioContext.createBufferSource();
-  source.buffer = buffer;
-  source.loop = true;
+function connectAudio(buffer) {
+  audioSource = audioContext.createBufferSource();
+  audioSource.buffer = buffer;
+  audioSource.loop = true;
 
   audioVolumeControl = audioContext.createGainNode();
-  source.connect(audioVolumeControl);
+  audioSource.connect(audioVolumeControl);
   audioVolumeControl.connect(audioContext.destination);
-
-  source.noteOn(0);
 };
 
 function loadNoise(){
@@ -40,7 +74,8 @@ function loadNoise(){
     audioContext.decodeAudioData(
       request.response,
       function(incomingBuffer) {
-        playNoise(incomingBuffer); // Not defined yet
+        connectNoise(incomingBuffer); // Not defined yet
+        noiseSource.noteOn(0);
       },
       function (e) {console.log(e);}
     );
@@ -48,15 +83,13 @@ function loadNoise(){
   request.send();
 };
 
-function playNoise(buffer) {
-  var source = audioContext.createBufferSource();
-  source.buffer = buffer;
-  source.loop = true;
+function connectNoise(buffer) {
+  noiseSource = audioContext.createBufferSource();
+  noiseSource.buffer = buffer;
+  noiseSource.loop = true;
 
   noiseVolumeControl = audioContext.createGainNode();
   noiseVolumeControl.gain.value = MAX_NOISE_GAIN;
-  source.connect(noiseVolumeControl);
+  noiseSource.connect(noiseVolumeControl);
   noiseVolumeControl.connect(audioContext.destination);
-
-  source.noteOn(0);
 };
