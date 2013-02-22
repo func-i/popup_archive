@@ -270,14 +270,13 @@ function startPage1(){
   playSound();
 };
 
-var pathQueue;
+var pathQueue = [];
 var page2IntervalTimer;
 function startPage2(){
   stopAll();
 
   circleMatrix = circleMatrices[1];
 
-  pathQueue = [];
   page2IntervalTimer = setInterval(connectRandomCircle, 2000);
 };
 
@@ -289,7 +288,7 @@ function startPage3(){
   circleMatrix = circleMatrices[2];
 
   //Bubble from bottom to top
-  bubbleArray = new Array(circleMatrix.length);
+  bubbleArray = bubbleArray || new Array(circleMatrix.length);
   page3IntervalTimer = setInterval(bubbleToTop, 500);
 };
 
@@ -626,8 +625,10 @@ function loadSVGMatrix(pageNumber, handlerOn){
     {
       var coorY = circleMatrix[coorX].length;
 
-      if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes)
+      if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes){
+        circleMatrix[coorX].push(undefined);
         continue;
+      }
 
       circleMatrix[coorX].push(new Circle(x, y, svgElem, circleMatrix));
 
