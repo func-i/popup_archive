@@ -624,14 +624,12 @@ function loadSVGMatrix(pageNumber, handlerOn){
 
     for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
     {
-      var coorY = circleMatrix.length;
+      var coorY = circleMatrix[coorX].length;
 
       if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes)
         continue;
 
       circleMatrix[coorX].push(new Circle(x, y, svgElem, circleMatrix));
-
-      coorY = circleMatrix.length + 1;
 
       circleMatrix[coorX][coorY].init();
       if(handlerOn){
