@@ -1,17 +1,23 @@
+var isMovingCauseOfTimer = false;
+
 $(function(){
   init();
 
   listenToScroll();
   scrollStopTimer = null;;
   $(window).scroll(function(){
-   /* if(scrollStopTimer){
-      clearTimeout(scrollStopTimer);
-      scrollStopTimer = null;
+    if(isMovingCauseOfTimer){
+      isMovingCauseOfTimer = false;
+      return true;
     }
 
     listenToScroll();
 
-    scrollStopTimer = setTimeout(scrollStopped, 500);*/
+   if(scrollStopTimer){
+      clearTimeout(scrollStopTimer);
+      scrollStopTimer = null;
+    }
+    scrollStopTimer = setTimeout(scrollStopped, 1000);
   });
 
   $('header a').click(function(){
@@ -20,27 +26,26 @@ $(function(){
   });
 });
 
-var targetVerticalScroll, targetHorizontalScroll;
 function listenToScroll(){
+  $('#pages_container').stop();
+
   var currentVerticalScroll = $(window).scrollTop();
-  var bodyHeight = $('body').height();
-  var pagesWidth = $('.page').width() * $('.page').length;
+  var bodyHeight = $('body').height() - window.innerHeight;
+  var pagesWidth = $('.page').width() * ($('.page').length - 1);
 
-  var calculatedHorizontalScroll = -currentVerticalScroll * pagesWidth / bodyHeight;
+  var calculatedHorizontalScroll = -pagesWidth * (currentVerticalScroll / bodyHeight);
 
-  var distanceToScroll = Math.abs(calculatedHorizontalScroll - targetHorizontalScroll);
-  var animationTime = distanceToScroll;
-
-  $('#pages_container').animate({'left': calculatedHorizontalScroll}, animationTime);
-  //$('#pages_container').css({'left': calculatedHorizontalScroll});
-
-  targetHorizontalScroll = calculatedHorizontalScroll;
+  $('#pages_container').stop().animate({'left': calculatedHorizontalScroll}, 10);
 };
 
 function scrollStopped(){
-  var currentPage = Math.round(-targetHorizontalScroll / $('.page').width()) + 1;
+  isMovingCauseOfTimer = true;
+
+  var currentPage = Math.round(-$('#pages_container').offset().left / $('.page').width()) + 1;
 
   gotoPage(currentPage);
+
+//  isMovingCauseOfTimer = false;
 };
 
 function init(){
@@ -114,11 +119,11 @@ function gotoPage(pageNumber){
   var page = $('#page_' + pageNumber);
   var currentOffset = $('#pages_container').offset().left;
   var pageOffset = page.offset().left;
-  $('#pages_container').animate({'left': currentOffset - pageOffset}, 1000, function(){});
+  $('#pages_container').stop().animate({'left': currentOffset - pageOffset}, 1000, function(){});
 
-  var bodyHeight = $('body').height();
-  var pagesWidth = $('.page').width() * $('.page').length;
-  var calculatedVerticalScroll = -(targetHorizontalScroll - pageOffset) * bodyHeight / pagesWidth;
+  var bodyHeight = $('body').height() - window.innerHeight;
+  var pagesWidth = $('.page').width() * ($('.page').length - 1);
+  var calculatedVerticalScroll = -bodyHeight * ((currentOffset - pageOffset) / pagesWidth);
 
   $(window).scrollTop(calculatedVerticalScroll);
 }
