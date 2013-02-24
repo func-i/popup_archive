@@ -17,7 +17,7 @@ $(function(){
       clearTimeout(scrollStopTimer);
       scrollStopTimer = null;
     }
-    scrollStopTimer = setTimeout(scrollStopped, 1000);
+    scrollStopTimer = setTimeout(scrollStopped, 400);
   });
 
   $('header a').click(function(){
