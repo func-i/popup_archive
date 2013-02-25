@@ -1,4 +1,5 @@
 var isMovingCauseOfTimer = false;
+var boxWidth = 100;
 
 $(function(){
   init();
@@ -44,8 +45,6 @@ function scrollStopped(){
   var currentPage = Math.round(-$('#pages_container').offset().left / $('.page').width()) + 1;
 
   gotoPage(currentPage);
-
-//  isMovingCauseOfTimer = false;
 };
 
 function init(){
@@ -53,6 +52,7 @@ function init(){
   $('.page').width(window.innerWidth);
 
   //Load the SVG for each page
+  initSVGMatrix();
   loadPage1();
   loadPage2();
   loadPage3();
@@ -72,7 +72,7 @@ function gotoPage(pageNumber){
         lastStoredPage = 1;
       }
       break;
-    case 2:
+     case 2:
       if(lastStoredPage != 2){
         startPage2();
         lastStoredPage = 2;
@@ -102,7 +102,7 @@ function gotoPage(pageNumber){
         lastStoredPage = 6;
       }
       break;
-    case 7:
+     case 7:
       if(lastStoredPage != 7){
         startPage7();
         lastStoredPage = 7;
@@ -130,9 +130,12 @@ function gotoPage(pageNumber){
 
 function stopAll(){
   pauseSound();
+  clearTimeout(page2Timer);
   clearInterval(page2IntervalTimer);
   clearInterval(page3IntervalTimer);
+  resetPage4();
   clearInterval(page5IntervalTimer);
+  resetPage5();
   clearInterval(page6IntervalTimer);
   clearInterval(page7IntervalTimer);
 };
@@ -141,12 +144,24 @@ var circleMatrices = new Array(8);
 var circleMatrix;
 
 function loadPage1(){
-  loadSVGMatrix(1, true);
-
   circleMatrix = circleMatrices[0];
 
+  //Set handlers
+  for(var x = circleMatrix.length - 1; x >= 0; x--){
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      var that = circleMatrix[x][y];
+      that.addClickHandler(page1ClickHandler);
+      that.addHoverHandler(
+        function(){ this.scale(1.5).colorOn(); },
+        function(){
+          if(this.clickOn) this.callOnNeighbours(1, function(){this.reset();});
+          this.reset();
+        }
+      );
+    }
+  }
   //Replace random circle with AudioSource Circle
-  var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
+/*  var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
   var audioSourceCircle =  new AudioSourceCircle(replaceCircleForAudio.x, replaceCircleForAudio.y, replaceCircleForAudio.svgElem, replaceCircleForAudio.circleMatrix);
   audioSourceCircle.init();
   audioSourceCircle.setupOnHover();
@@ -154,51 +169,39 @@ function loadPage1(){
   audioSourceCircle.startBroadcast(1, 0.7);
   var coor = Circle.convertCoordinatesIntoMatrixIndex(audioSourceCircle.x, audioSourceCircle.y);
   circleMatrix[coor[0]][coor[1]].remove();
-  circleMatrix[coor[0]][coor[1]] = audioSourceCircle;
+  circleMatrix[coor[0]][coor[1]] = audioSourceCircle;*/
 
 
   //Start Sound
-  startSound(audioSourceCircle, $('#page_1 svg'));
+  //startSound(audioSourceCircle, $('#page_1 svg'));
 };
 
-function loadPage2(){
-  loadSVGMatrix(2, false);
+function page1ClickHandler(clickedCircle){
+  var that = this;
 
-  circleMatrix = circleMatrices[1];
+  that.clickOn = true;
 
-  //Blur circles
-  var contentEl = $('#page_2 .content');
-  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
+  that.scale(0.5).startBroadcast(null, null, null, 0.7).colorOn().callOnNeighbours(1, function()
+  {
+    var xDistance = this.x - that.x;
+    var yDistance = this.y - that.y;
+    var newXDistance = (boxWidth + this.currentOuterRadius()) * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119);
+    var newYDistance = (boxWidth + this.currentOuterRadius()) * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119);
+    var newXCoor = that.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
+    var newYCoor = that.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
 
-  for(var x = 0; x < circleMatrix.length; x++){
-    for(var y = 0; y < circleMatrix[x].length; y++)
-    {
-
-      if(typeof circleMatrix[x][y] == 'undefined')
-        continue;
-
-      var blur = 5 * (rightPositionOfContentInBoxes - x) / rightPositionOfContentInBoxes;
-      if(blur > 0)
-        circleMatrix[x][y].blur(blur);
-    }
-  }
-}
-
-function loadPage3(){
-  loadSVGMatrix(3, false);
-
-  circleMatrix = circleMatrices[2];
-}
-
-function loadPage4(){
-  loadSVGMatrix(4, false);
-
-  circleMatrix = circleMatrices[3];
+    this.move(newXCoor, newYCoor,  BROADCAST_NEIGHBOUR_MOVE_TIME, null, null, 'bounce').colorOn();
+  });
 };
+
+function loadPage2(){};
+
+
+function loadPage3(){}
+
+function loadPage4(){};
 
 function loadPage5(){
-  loadSVGMatrix(5, false);
-
   circleMatrix = circleMatrices[4];
 
   for(var x = 0; x < circleMatrix.length; x++){
@@ -212,20 +215,16 @@ function loadPage5(){
 };
 
 function loadPage6(){
-  loadSVGMatrix(6, false);
-
   circleMatrix = circleMatrices[5];
 
   resetPage6();
 };
 
 function loadPage7(){
-  loadSVGMatrix(7, false);
-
   circleMatrix = circleMatrices[6];
 
   var contentEl = $('#page_7 .content');
-  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
 
   for(var x = circleMatrix.length - 1; x >= 0 ; x--)
   {
@@ -266,11 +265,7 @@ function loadPage7(){
   }
 };
 
-function loadPage8(){
-  loadSVGMatrix(8, false);
-
-  circleMatrix = circleMatrices[2];
-};
+function loadPage8(){};
 
 function startPage1(){
   stopAll();
@@ -282,12 +277,17 @@ function startPage1(){
 
 var pathQueue = [];
 var page2IntervalTimer;
+var page2Timer;
+var page2CurrentBlur;
+var lastConnectedCircle;
 function startPage2(){
   stopAll();
 
   circleMatrix = circleMatrices[1];
 
   page2IntervalTimer = setInterval(connectRandomCircle, 2000);
+  page2CurrentBlur = 0;
+  blurCircles();
 };
 
 var bubbleArray;
@@ -307,25 +307,26 @@ function startPage4(){
 
   circleMatrix = circleMatrices[3];
 
-
   if(typeof circleMatrix[4][3] != 'undefined'){
-    circleMatrix[4][3].grow(3, 1500);
-    circleMatrix[4][3].callOnNeighbours(1, function(){
-      this.innerCircle.stop().animate({'opacity': 0}, 1500);
-      this.outerCircle.stop().animate({'opacity': 0}, 1500);
+    circleMatrix[4][3].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
+      this.hide(1500);
     });
   }
 
   if(typeof circleMatrix[9][1] != 'undefined'){
-    circleMatrix[9][1].grow(3, 1500);
-    circleMatrix[9][1].callOnNeighbours(1, function(){
-      this.innerCircle.stop().animate({'opacity': 0}, 1500);
-      this.outerCircle.stop().animate({'opacity': 0}, 1500);
+    circleMatrix[9][1].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
+      this.hide(1500);
     });
   }
+};
 
-  circleMatrix[4][3].startBroadcast(1, 0.7, 1000);
-  circleMatrix[9][1].startBroadcast(1, 0.7, 1000);
+function resetPage4(){
+  circleMatrix[4][3].reset().callOnNeighbours(1, function(){
+      this.show();
+  });
+  circleMatrix[9][1].reset().callOnNeighbours(1, function(){
+      this.show();
+    });
 };
 
 var currentColoredColumnIndex;
@@ -336,7 +337,18 @@ function startPage5(){
   circleMatrix = circleMatrices[4];
 
   currentColoredColumnIndex = undefined;
-  page5IntervalTimer = setInterval(colorColumn, 1500);
+  page5IntervalTimer = setInterval(colorColumn, 700);
+};
+
+function resetPage5(){
+  if(typeof currentColoredColumnIndex != 'undefined'){
+    for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
+      if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined')
+        circleMatrix[currentColoredColumnIndex][y].colorOff();
+    }
+
+    currentColoredColumnIndex = undefined;
+  }
 };
 
 var swappedInnerRadiuses;
@@ -370,13 +382,13 @@ function startPage8(){
   var hideHeight, innerColor, outerColor;
   for(var x = 0; x < circleMatrix.length; x++){
     if(x < Math.floor(circleMatrix.length/3)){
-      hideHeight = 4;
+      hideHeight = circleMatrix[x].length - 1;
       innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
       outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
       delay = 2000;
     }
     else if(x < 2*Math.floor(circleMatrix.length/3)){
-      hideHeight = 2;
+      hideHeight = Math.floor((circleMatrix[x].length - 1) / 2);
       innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
       outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
       delay = 8000;
@@ -392,13 +404,22 @@ function startPage8(){
       if(typeof circleMatrix[x][y] != 'undefined')
         circleMatrix[x][y].hide();
 
-    if(typeof circleMatrix[x][hideHeight] == 'undefined' || hideHeight == circleMatrix[x].length)
+
+    var colorNotOn = true;
+    while(colorNotOn && hideHeight < circleMatrix[x].length){
+      if(typeof circleMatrix[x][hideHeight] != 'undefined')
+        colorNotOn = false
+      else
+        hideHeight++;
+    }
+
+    if(hideHeight == circleMatrix[x].length || typeof circleMatrix[x][hideHeight] == 'undefined')
       continue;
 
     circleMatrix[x][hideHeight].setInnerColor(innerColor);
     circleMatrix[x][hideHeight].setOuterColor(outerColor);
 
-    circleMatrix[x][hideHeight].colorOn(1, delay);
+    circleMatrix[x][hideHeight].colorOn(1000, null, null, delay);
   }
 };
 
@@ -414,7 +435,7 @@ function resetPage6(){
 
     for(var y = 0; y < circleMatrix[x].length; y++)
       if(typeof circleMatrix[x][y] != 'undefined')
-        circleMatrix[x][y].setInnerRadius(innerRadius);
+        circleMatrix[x][y].setBaseInnerRadius(innerRadius);
   }
 };
 
@@ -430,24 +451,20 @@ function bubbleToTop(){
       nextBubble = circleMatrix[x][circleMatrix[x].length - 1];
     }
     else{
-      var currentYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, currentBubble.y)[1];
-
-      if(currentYIndex == 0 || typeof circleMatrix[x][currentYIndex - 1] == 'undefined' || !circleMatrix[x][currentYIndex - 1].isVisible()){
+      if(currentBubble.matrixYIndex == 0 || typeof circleMatrix[x][currentBubble.matrixYIndex - 1] == 'undefined' || !circleMatrix[x][currentBubble.matrixYIndex - 1].isVisible()){
         nextBubble = undefined;
       }
       else
-        nextBubble = circleMatrix[x][currentYIndex - 1];
+        nextBubble = circleMatrix[x][currentBubble.matrixYIndex - 1];
 
-      currentBubble.reset(0.5);
+      currentBubble.reset(2000, null, null, 0.5);
     }
 
     if(typeof nextBubble != 'undefined'){
-      nextBubble.grow(1, 700);
+      nextBubble.scale(1.5, 700).colorOn();
 
-      var nextYIndex = Circle.convertCoordinatesIntoMatrixIndex(null, nextBubble.y)[1];
-
-      if(0 == nextYIndex  || typeof circleMatrix[x][nextYIndex] == 'undefined' || !circleMatrix[x][nextYIndex].isVisible())
-        nextBubble.sendBroadcast(1, 0.7)
+      if(0 == nextBubble.matrixYIndex  || typeof circleMatrix[x][nextBubble.matrixYIndex] == 'undefined' || !circleMatrix[x][nextBubble.matrixYIndex].isVisible())
+        nextBubble.sendBroadcast(nextBubble.currentOuterRadius(), boxWidth + nextBubble.currentOuterRadius(), 0.7);
     }
 
     bubbleArray[x] = nextBubble;
@@ -498,7 +515,7 @@ function returnSwappedRadiuses(){
     });
 
     var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
-      circle1.colorOff();
+      circle1.colorOff(1500);
     });
 
     circle1.innerCircle.animate(swapAnim.delay(2000));
@@ -513,7 +530,7 @@ function returnSwappedRadiuses(){
     var swapAnim = Raphael.animation({
       opacity: 1
     }, 1000, function(){
-      circle2.colorOff();
+      circle2.colorOff(1500);
     })
 
     circle2.innerCircle.animate(swapAnim.delay(2000));
@@ -538,42 +555,40 @@ function swapRandomInnerRadiuses(){
   for(var i = 0; i < 3; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
-    firstSectionRandomCircle.setInnerRadius(25);
-    secondSectionRandomCircle.setInnerRadius(10);
+    firstSectionRandomCircle.setBaseInnerRadius(25);
+    secondSectionRandomCircle.setBaseInnerRadius(10);
     swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
   for(var i = 0; i < 3; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
-    firstSectionRandomCircle.setInnerRadius(17);
-    thirdSectionRandomCircle.setInnerRadius(10);
+    firstSectionRandomCircle.setBaseInnerRadius(17);
+    thirdSectionRandomCircle.setBaseInnerRadius(10);
     swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
   for(var i = 0; i < 3; i++){
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
-    secondSectionRandomCircle.setInnerRadius(17);
-    thirdSectionRandomCircle.setInnerRadius(25);
+    secondSectionRandomCircle.setBaseInnerRadius(17);
+    thirdSectionRandomCircle.setBaseInnerRadius(25);
     swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle]);
   }
 };
 
 function swapCircles(){
   var contentEl = $('#page_7 .content');
-  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
 
   var circle1 = getRandomCircle(rightPositionOfContentInBoxes + 1, 0, circleMatrix.length - rightPositionOfContentInBoxes - 1, circleMatrix[0].length);
   circle1.svgSet.toFront();
-  var circle1X = circle1.x, circle1Y = circle1.y;
-  var circle1Coor = Circle.convertCoordinatesIntoMatrixIndex(circle1X, circle1Y);
 
   var loop = true;
   var circle2;
   while(loop){
-    var newX = circle1Coor[0] + Math.round(2*Math.random()) - 1;
-    var newY = circle1Coor[1] + Math.round(2*Math.random()) - 1;
+    var newX = circle1.matrixXIndex + Math.round(2*Math.random()) - 1;
+    var newY = circle1.matrixYIndex + Math.round(2*Math.random()) - 1;
 
     if(newX >= circleMatrix.length
       || newY >= circleMatrix.length
@@ -586,66 +601,68 @@ function swapCircles(){
     circle2 = circleMatrix[newX][newY];
     loop = false;
   }
-  var circle2X = circle2.x, circle2Y = circle2.y;
   circle2.svgSet.toFront();
 
-  var circle1Anim = Raphael.animation({'cx': circle2X, 'cy': circle2Y}, 1000, 'ease-in', function(){
-    circle1.colorOff();
+  circle1.colorOn().move(circle2.x, circle2.y, 1000, function(){
+    circle1.colorOff(1000);
   });
-  var circle2Anim = Raphael.animation({'cx': circle1X, 'cy': circle1Y}, 1000, 'ease-in', function(){
-    circle2.colorOff();
+  circle2.colorOn().move(circle1.x, circle1.y, 1000, function(){
+    circle2.colorOff(1000);
   });
-  circle1.svgSet.stop().animate(circle1Anim);
-  circle2.svgSet.stop().animateWith(circle1.svgSet, circle1Anim, circle2Anim);
 
-  circle1.colorOn();
-  circle2.colorOn();
+  var tmpX = circle1.x, tmpY = circle1.y;
 
-  circle1.x = circle2X;
-  circle1.y = circle2Y;
-  var circle2Coor = Circle.convertCoordinatesIntoMatrixIndex(circle2X, circle2Y);
-  circleMatrix[circle2Coor[0]][circle2Coor[1]] = circle1;
+  circle1.x = circle2.x;
+  circle1.y = circle2.y;
+  circle2.x = tmpX;
+  circle2.y = tmpY;
 
-  circle2.x = circle1X;
-  circle2.y = circle1Y;
-  circleMatrix[circle1Coor[0]][circle1Coor[1]] = circle2;
+  tmpX =  circle1.matrixXIndex, tmpY = circle1.matrixYIndex;
+  circleMatrix[circle2.matrixXIndex][circle2.matrixYIndex] = circle1;
+  circleMatrix[circle1.matrixXIndex][circle1.matrixYIndex] = circle2;
+  circle1.matrixXIndex = circle2.matrixXIndex;
+  circle1.matrixYIndex = circle2.matrixYIndex;
+  circle2.matrixXIndex = tmpX;
+  circle2.matrixYIndex = tmpY;
 };
 
-function loadSVGMatrix(pageNumber, handlerOn){
-  var svgWidth = $('#page_' + pageNumber).width();
-  var svgHeight = $('#page_' + pageNumber).height();
+function initSVGMatrix(){
+  var pageWidth = $('.page').width();
+  var numBoxWidthPerPage = Math.floor(pageWidth / boxWidth);
+  boxWidth = pageWidth / numBoxWidthPerPage;
+
+  var svgWidth = pageWidth * circleMatrices.length;
+  var svgHeight = $('.page').height();
   var svgTopMargin = $('header').height();
-  var svgElem = Raphael($('#page_' + pageNumber + ' .svg')[0], svgWidth, svgHeight);
+  var svgElem = Raphael($('.svg')[0], svgWidth, svgHeight);
 
-  var contentEl = $('#page_' + pageNumber + ' .content');
-  if(contentEl.length > 0){
-    var leftContentOffsetInBoxes = getLeftPositionOfContentInBoxes(pageNumber);
-    var contentWidthInBoxes = Math.ceil(contentEl.width() / BOX_WIDTH);
-    var contentHeightInBoxes = Math.ceil(contentEl.height() / BOX_WIDTH);
-  }
+  for(var pageNumber = 0; pageNumber < circleMatrices.length; pageNumber++){
+    var contentEl = $('#page_' + (pageNumber  + 1)+ ' .content');
+    if(contentEl.length > 0){
+      var leftContentOffsetInBoxes = getLeftPositionOfContentInBoxes(pageNumber + 1);
+      var contentWidthInBoxes = Math.ceil(contentEl.width() / boxWidth);
+      var contentHeightInBoxes = Math.ceil(contentEl.height() / boxWidth);
+    }
+    var circleMatrix = circleMatrices[pageNumber] = new Array();
 
-  var circleMatrix = circleMatrices[pageNumber - 1] = new Array();
+    for(var pageX = boxWidth/2; pageX < pageWidth; pageX += boxWidth){
 
-  for(var x = BOX_WIDTH/2; x <= svgWidth; x += BOX_WIDTH)
-  {
-    circleMatrix.push(new Array());
-    var coorX = circleMatrix.length - 1;
+      circleMatrix.push(new Array());
 
-    for(var y = svgTopMargin + BOX_WIDTH/2; y <= svgHeight; y += BOX_WIDTH)
-    {
-      var coorY = circleMatrix[coorX].length;
+      var xArrIndex = circleMatrix.length - 1;
 
-      if(contentEl.length > 0 && coorX >= leftContentOffsetInBoxes && coorX < leftContentOffsetInBoxes + contentWidthInBoxes && coorY < contentHeightInBoxes){
-        circleMatrix[coorX].push(undefined);
-        continue;
-      }
+      for(var pageY = svgTopMargin + boxWidth/2; pageY <= svgHeight; pageY += boxWidth)
+      {
+        var yArrIndex = circleMatrix[xArrIndex].length;
 
-      circleMatrix[coorX].push(new Circle(x, y, svgElem, circleMatrix));
+        if(contentEl.length > 0 && xArrIndex >= leftContentOffsetInBoxes && xArrIndex  < leftContentOffsetInBoxes + contentWidthInBoxes && yArrIndex < contentHeightInBoxes)
+        {
+          circleMatrix[xArrIndex].push(undefined);
+          continue;
+        }
 
-      circleMatrix[coorX][coorY].init();
-      if(handlerOn){
-        circleMatrix[coorX][coorY].setupOnHover();
-        circleMatrix[coorX][coorY].setupOnClick();
+        circleMatrix[xArrIndex].push(new Circle(svgElem, pageX + pageWidth*pageNumber, pageY, circleMatrix, xArrIndex, yArrIndex));
+        circleMatrix[xArrIndex][yArrIndex].init();
       }
     }
   }
@@ -654,25 +671,52 @@ function loadSVGMatrix(pageNumber, handlerOn){
 function connectRandomCircle(){
   if(pathQueue.length > 5){
     var removedPathArr = pathQueue.shift();
-    removedPathArr[0].removePath(removedPathArr[2], removedPathArr[1]);
+    removedPathArr[0].removePath(removedPathArr[1], null, function(){
+      if(removedPathArr[0].getConnectedPaths().length == 0)
+        removedPathArr[0].colorOff();
+    });
   }
 
   var contentEl = $('#page_2 .content');
-  var rightPositionOfContentInBoxes = getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / BOX_WIDTH);
+  var rightPositionOfContentInBoxes = getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
+
+  if(typeof lastConnectedCircle == 'undefined'){
+    lastConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+    lastConnectedCircle.colorOn();
+  }
 
   var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+  newConnectedCircle.colorOn(CONNECT_TIME);
 
-  var connectFromCircle;
-  if(pathQueue.length == 0){
-    connectFromCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+  var path = lastConnectedCircle.connectNeighbourWithArc(newConnectedCircle, null, null, function(){
+    newConnectedCircle.colorOn();
+  });
+
+  pathQueue.push([lastConnectedCircle, path]);
+  lastConnectedCircle = newConnectedCircle;
+};
+
+function blurCircles(){
+  var contentEl = $('#page_2 .content');
+  var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
+
+  page2CurrentBlur += 0.1;
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    for(var y = 0; y < circleMatrix[x].length; y++)
+    {
+
+      if(typeof circleMatrix[x][y] == 'undefined')
+        continue;
+
+      var blur = page2CurrentBlur * (rightPositionOfContentInBoxes - x) / rightPositionOfContentInBoxes;
+      if(blur > 0)
+        circleMatrix[x][y].setBlur(blur);
+    }
   }
-  else{
-    connectFromCircle = pathQueue[pathQueue.length - 1][1]
-  }
 
-  var path = connectFromCircle.connectNeighbourWithArc(newConnectedCircle);
-
-  pathQueue.push([connectFromCircle, newConnectedCircle, path]);
+  if(page2CurrentBlur < 10)
+    page2Timer = setTimeout(blurCircles, 200);
 };
 
 function getRandomCircle(xOffset, yOffset, width, height){
@@ -701,6 +745,6 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
 
 
 function getLeftPositionOfContentInBoxes(pageNumber){
-  return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / BOX_WIDTH);
+  return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / boxWidth);
 }
 

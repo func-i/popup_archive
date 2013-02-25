@@ -50,9 +50,9 @@
         height: 100%;
         width: 2200px; /*TMP*/
       }
-      .page .svg{
+      .svg{
         position: absolute;
-        z-index: 0;
+        z-index: 2;
         left: 0;
         top: 0;
       }
@@ -88,14 +88,13 @@
 
     <div id="pages_viewer">
       <div id="pages_container">
+        <div class="svg"></div>
+
 
         <div class="page" id="page_1">
-          <div class="svg"></div>
         </div>
 
         <div class="page" id="page_2">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 2 Journalists, broadcasters, & producers</h1>
@@ -105,8 +104,6 @@
         </div>
 
         <div class="page" id="page_3">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 3 Journalists, broadcasters, & producers</h1>
@@ -116,8 +113,6 @@
         </div>
 
         <div class="page" id="page_4">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 4 Journalists, broadcasters, & producers</h1>
@@ -127,8 +122,6 @@
         </div>
 
         <div class="page" id="page_5">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 5 Journalists, broadcasters, & producers</h1>
@@ -138,8 +131,6 @@
         </div>
 
         <div class="page" id="page_6">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 6 Journalists, broadcasters, & producers</h1>
@@ -149,8 +140,6 @@
         </div>
 
         <div class="page" id="page_7">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 7 Journalists, broadcasters, & producers</h1>
@@ -160,8 +149,6 @@
         </div>
 
         <div class="page" id="page_8">
-          <div class="svg"></div>
-
           <div class="content-holder">
             <div class="content">
               <h1>PAGE 8 Journalists, broadcasters, & producers</h1>
@@ -183,7 +170,6 @@ var RED_COLORS = ['#F25A4C', '#FB2C24', '#8B312C', '#9D175B'];
 var GREEN_COLORS = ['#807340', '#C9B82C', '#32A853'];
 var BLUE_COLORS = [ '#5F74BC', '#C0C8E4', '#3071FC'];
 var CONNECT_COLOR = "#C9B82C";
-var BOX_WIDTH = 100;
 var OUTER_CIRCLE_RADIUS = 30;
 var OUTER_CIRCLE_STROKE_WIDTH = 5;
 var MAX_INNER_CIRCLE_RADIUS = 25;
@@ -207,9 +193,9 @@ $(function(){
   //loadMainPage();
 });
     </script>
-    <script type="text/javascript" src="circle.js"></script>
+    <script type="text/javascript" src="base_circle.js"></script>
     <script type="text/javascript" src="audio.js"></script>
-    <script type="text/javascript" src="pages.js"></script>
+    <script type="text/javascript" src="pages_alt.js"></script>
 
   </body>
 </html>

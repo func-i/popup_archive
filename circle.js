@@ -288,7 +288,9 @@ Circle.prototype.removeConnectedPaths = function(){
 };
 
 Circle.prototype.removePath = function(path, neighbour){
-  path.animate({opacity: 0}, RESET_TIME);
+  path.animate({'opacity': 0}, RESET_TIME, function(){
+      this.remove();
+  });
 
   var indexOf;
   $.each(this.connectedPaths, function(index, pathArr){
@@ -303,8 +305,6 @@ Circle.prototype.removePath = function(path, neighbour){
       indexOf = index;
   });
   neighbour.connectedPaths.splice(indexOf, 1);
-
-  path.remove();
 
   if(neighbour.connectedPaths.length == 0){
     neighbour.colorOff();
