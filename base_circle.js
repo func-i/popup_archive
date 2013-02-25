@@ -122,9 +122,16 @@ Circle.prototype.scale = function(scale, scaleTime, callback, easing, delay){
 
   this.scaleAnimations = new Array(2);
   this.scaleAnimations[0] = Raphael.animation({r: this.innerCircleRadius * scale}, scaleTime, easing, callback);
-  this.innerCircle.animate(this.scaleAnimations[0].delay(delay));
   this.scaleAnimations[1] = Raphael.animation({r: this.outerCircleRadius * scale}, scaleTime, easing, callback);
-  this.outerCircle.animate(this.scaleAnimations[1].delay(delay));
+
+  if( delay != null){
+    this.innerCircle.animate(this.scaleAnimations[0].delay(delay));
+    this.outerCircle.animate(this.scaleAnimations[1].delay(delay));
+  }
+  else{
+    this.innerCircle.animate(this.scaleAnimations[0]);
+    this.outerCircle.animate(this.scaleAnimations[1]);
+  }
 
   return this;
 };
@@ -144,9 +151,16 @@ Circle.prototype.colorOn = function(colorTime, callback, easing, delay){
 
   this.colorAnimations = new Array(2);
   this.colorAnimations[0] = Raphael.animation({fill: this.innerCircleColor}, colorTime, easing, callback);
-  this.innerCircle.animate(this.colorAnimations[0].delay(delay));
   this.colorAnimations[1] = Raphael.animation({stroke: this.outerCircleColor}, colorTime, easing, callback);
-  this.outerCircle.animate(this.colorAnimations[1].delay(delay));
+
+  if(delay != null){
+    this.innerCircle.animate(this.colorAnimations[0].delay(delay));
+    this.outerCircle.animate(this.colorAnimations[1].delay(delay));
+  }
+  else{
+    this.innerCircle.animate(this.colorAnimations[0]);
+    this.outerCircle.animate(this.colorAnimations[1]);
+  }
 
   this.isColorOn = true;
 
@@ -159,6 +173,7 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
 
   colorTime = colorTime != null  ? colorTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
+  delay = delay != null  ? delay : null;
 
   if(this.colorAnimations){
     this.innerCircle.stop(this.colorAnimations[0]);
@@ -167,9 +182,16 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
 
   this.colorAnimations = new Array(2);
   this.colorAnimations[0] = Raphael.animation({fill: "#E0DCDC"}, colorTime, easing, callback);
-  this.innerCircle.animate(this.colorAnimations[0].delay(delay));
   this.colorAnimations[1] = Raphael.animation({stroke: "#E0DCDC"}, colorTime, easing, callback);
-  this.outerCircle.animate(this.colorAnimations[1].delay(delay));
+
+  if(delay != null){
+    this.innerCircle.animate(this.colorAnimations[0].delay(delay));
+    this.outerCircle.animate(this.colorAnimations[1].delay(delay));
+  }
+  else{
+    this.innerCircle.animate(this.colorAnimations[0]);
+    this.outerCircle.animate(this.colorAnimations[1]);
+  }
 
   this.isColorOn = false;
 
@@ -192,9 +214,16 @@ Circle.prototype.setOpacity = function(opacity, opacityTime, callback, easing, d
 
   this.opacityAnimations = new Array(2);
   this.opacityAnimations[0] = Raphael.animation({'opacity': opacity}, opacityTime, easing, callback);
-  this.innerCircle.animate(this.opacityAnimations[0].delay(delay));
   this.opacityAnimations[1] = Raphael.animation({'opacity': opacity}, opacityTime, easing, callback);
-  this.outerCircle.animate(this.opacityAnimations[1].delay(delay));
+
+  if(delay != null){
+    this.innerCircle.animate(this.opacityAnimations[0].delay(delay));
+    this.outerCircle.animate(this.opacityAnimations[1].delay(delay));
+  }
+  else{
+    this.innerCircle.animate(this.opacityAnimations[0]);
+    this.outerCircle.animate(this.opacityAnimations[1]);
+  }
 
   return this;
 };
@@ -214,7 +243,11 @@ Circle.prototype.move = function(x, y,  moveTime, callback, easing, delay){
   }
 
   this.moveAnimation = Raphael.animation({'cx': x, 'cy': y}, moveTime, easing, callback);
-  this.svgSet.animate(this.moveAnimation.delay(delay));
+
+  if(delay != null)
+    this.svgSet.animate(this.moveAnimation.delay(delay));
+  else
+    this.svgSet.animate(this.moveAnimation);
 
   return this;
 };
@@ -242,7 +275,11 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
       callback();
     this.remove();
   });
-  broadcastCircle.animate(broadcastAnim.delay(delay));
+
+  if(delay != null)
+    broadcastCircle.animate(broadcastAnim.delay(delay));
+  else
+    broadcastCircle.animate(broadcastAnim);
 
   return this;
 };
@@ -276,7 +313,10 @@ Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, conn
     "M" + this.x + " " + this.y +
     "S" + (this.x + neighbour.x)/2 + " " + Math.floor((this.y + neighbour.y)/2 + (this.y - neighbour.y)/2*Math.random()) + " " + neighbour.x + " " + neighbour.y;
   var pathAnimation = Raphael.animation({'path': curveString}, connectTime, easing, callback);
-  path.animate(pathAnimation.delay(delay));
+  if(delay != null)
+    path.animate(pathAnimation.delay(delay));
+  else
+    path.animate(pathAnimation);
 
   (this.connectedPaths = this.connectedPaths || []).push([path, neighbour]);
   (neighbour.connectedPaths = neighbour.connectedPaths || []).push([path, this]);
@@ -302,6 +342,7 @@ Circle.prototype.removeConnectedPaths = function(removeTime, callback, easing, d
 Circle.prototype.removePath = function(path, removeTime, callback, easing, delay){
   removeTime = removeTime != null  ? removeTime : RESET_TIME;
   easing = easing != null  ? easing : "easeIn";
+  delay = delay != null  ? delay : null;
 
   var that = this;
   var pathAnimation = Raphael.animation({'opacity': 0}, removeTime, easing, function(){
@@ -309,7 +350,10 @@ Circle.prototype.removePath = function(path, removeTime, callback, easing, delay
       if(typeof callback == 'function')
         callback.call(this);
   });
-  path.animate(pathAnimation.delay(delay));
+  if(delay != null)
+    path.animate(pathAnimation.delay(delay));
+  else
+    path.animate(pathAnimation);
 
   if(typeof this.connectedPaths == 'undefined')
     return this;
