@@ -4,8 +4,7 @@ var boxWidth = 100;
 $(function(){
   init();
 
-  listenToScroll();
-  scrollStopTimer = null;
+  var scrollStopTimer = null;
   $(window).scroll(function(){
     if(isMovingCauseOfTimer){
       isMovingCauseOfTimer = false;
@@ -19,6 +18,15 @@ $(function(){
       scrollStopTimer = null;
     }
     scrollStopTimer = setTimeout(scrollStopped, 400);
+  });
+
+  var resizeStopTimer = null;
+  $(window).resize(function(){
+    if(resizeStopTimer){
+      clearTimeout(resizeStopTimer);
+      resizeStopTimer = null;
+    }
+    resizeStopTimer = setTimeout(init, 400);
   });
 
   $('header a').click(function(){
@@ -61,6 +69,13 @@ function init(){
   loadPage6();
   loadPage7();
   loadPage8();
+
+  listenToScroll();
+  if(lastStoredPage){
+    var tmpPage = lastStoredPage;
+    lastStoredPage = null;
+    gotoPage(tmpPage);
+  }
 };
 
 var lastStoredPage;
@@ -307,13 +322,13 @@ function startPage4(){
 
   circleMatrix = circleMatrices[3];
 
-  if(typeof circleMatrix[4][3] != 'undefined'){
+  if(circleMatrix.length > 4 && circleMatrix[4].length > 3 && typeof circleMatrix[4][3] != 'undefined'){
     circleMatrix[4][3].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
       this.hide(1500);
     });
   }
 
-  if(typeof circleMatrix[9][1] != 'undefined'){
+  if(circleMatrix.length > 9 && circleMatrix[9].length > 1 && typeof circleMatrix[9][1] != 'undefined'){
     circleMatrix[9][1].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
       this.hide(1500);
     });
@@ -321,10 +336,13 @@ function startPage4(){
 };
 
 function resetPage4(){
-  circleMatrix[4][3].reset().callOnNeighbours(1, function(){
+  if(circleMatrix.length > 4 && circleMatrix[4].length > 3 && typeof circleMatrix[4][3] != 'undefined')
+    circleMatrix[4][3].reset().callOnNeighbours(1, function(){
       this.show();
-  });
-  circleMatrix[9][1].reset().callOnNeighbours(1, function(){
+    });
+
+  if(circleMatrix.length > 9 && circleMatrix[9].length > 1 && typeof circleMatrix[9][1] != 'undefined')
+    circleMatrix[9][1].reset().callOnNeighbours(1, function(){
       this.show();
     });
 };
@@ -499,8 +517,8 @@ function returnSwappedRadiuses(){
   var circle1 = swappedRadiuses[0];
   var circle2 = swappedRadiuses[1];
 
-  var circle1Radius = circle1.currentInnerRadius();
-  var circle2Radius = circle2.currentInnerRadius();
+  var circle1Radius = circle1.innerCircleRadius;
+  var circle2Radius = circle2.innerCircleRadius;
 
   var circle1Fill = circle1.innerCircleColor;
   var circle2Fill = circle2.innerCircleColor;
@@ -552,7 +570,7 @@ function swapRandomInnerRadiuses(){
   var thirdSectionStart = 2*Math.floor(circleMatrix.length/3);
   var thirdSectionWidth = circleMatrix.length - 2*Math.floor(circleMatrix.length/3);
   //Swap 1st and 2nd section
-  for(var i = 0; i < 3; i++){
+  for(var i = 0; i < 2; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
     firstSectionRandomCircle.setBaseInnerRadius(25);
@@ -560,7 +578,7 @@ function swapRandomInnerRadiuses(){
     swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
-  for(var i = 0; i < 3; i++){
+  for(var i = 0; i < 2; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
     firstSectionRandomCircle.setBaseInnerRadius(17);
@@ -568,7 +586,7 @@ function swapRandomInnerRadiuses(){
     swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle]);
   }
   //Swap 1st and 3rd section
-  for(var i = 0; i < 3; i++){
+  for(var i = 0; i < 2; i++){
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
     secondSectionRandomCircle.setBaseInnerRadius(17);
@@ -628,6 +646,7 @@ function swapCircles(){
 
 function initSVGMatrix(){
   var pageWidth = $('.page').width();
+  boxWidth = 100;
   var numBoxWidthPerPage = Math.floor(pageWidth / boxWidth);
   boxWidth = pageWidth / numBoxWidthPerPage;
 
@@ -738,7 +757,7 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
     while(true){
       var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
 
-      if(typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.currentInnerRadius() == unSwappedRadius)
+      if(typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.innerCircleRadius == unSwappedRadius)
         return randomCircle;
     }
 };
