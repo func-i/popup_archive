@@ -14,6 +14,8 @@ Circle.prototype.init = function(){
   this.setBaseOuterRadius();
 
   this.draw();
+  this.show();
+
   return this;
 };
 

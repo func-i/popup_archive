@@ -336,6 +336,8 @@ function startPage4(){
 };
 
 function resetPage4(){
+  circleMatrix = circleMatrices[3];
+
   if(circleMatrix.length > 4 && circleMatrix[4].length > 3 && typeof circleMatrix[4][3] != 'undefined')
     circleMatrix[4][3].reset().callOnNeighbours(1, function(){
       this.show();
@@ -359,6 +361,8 @@ function startPage5(){
 };
 
 function resetPage5(){
+  circleMatrix = circleMatrices[4];
+
   if(typeof currentColoredColumnIndex != 'undefined'){
     for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
       if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined')
@@ -573,6 +577,8 @@ function swapRandomInnerRadiuses(){
   for(var i = 0; i < 2; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
+    if(firstSectionRandomCircle == null || secondSectionRandomCircle == null)
+      continue;
     firstSectionRandomCircle.setBaseInnerRadius(25);
     secondSectionRandomCircle.setBaseInnerRadius(10);
     swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle]);
@@ -581,6 +587,8 @@ function swapRandomInnerRadiuses(){
   for(var i = 0; i < 2; i++){
     var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
+    if(firstSectionRandomCircle == null || thirdSectionRandomCircle == null)
+      continue;
     firstSectionRandomCircle.setBaseInnerRadius(17);
     thirdSectionRandomCircle.setBaseInnerRadius(10);
     swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle]);
@@ -589,6 +597,8 @@ function swapRandomInnerRadiuses(){
   for(var i = 0; i < 2; i++){
     var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
     var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
+    if(secondSectionRandomCircle == null || thirdSectionRandomCircle == null)
+      continue;
     secondSectionRandomCircle.setBaseInnerRadius(17);
     thirdSectionRandomCircle.setBaseInnerRadius(25);
     swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle]);
@@ -600,6 +610,8 @@ function swapCircles(){
   var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
 
   var circle1 = getRandomCircle(rightPositionOfContentInBoxes + 1, 0, circleMatrix.length - rightPositionOfContentInBoxes - 1, circleMatrix[0].length);
+  if(circle1 == null)
+    return;
   circle1.svgSet.toFront();
 
   var loop = true;
@@ -739,27 +751,46 @@ function blurCircles(){
 };
 
 function getRandomCircle(xOffset, yOffset, width, height){
-      var randomXIndex = Math.round((width - 1)*Math.random());
-      var randomYIndex = Math.round((height -1)*Math.random());
-      return circleMatrix[xOffset+randomXIndex][yOffset + randomYIndex];
+    if(width <= 0 || height <= 0) return null;
+
+    var randomXIndex = Math.round((width - 1)*Math.random());
+    var randomYIndex = Math.round((height -1)*Math.random());
+
+    if(xOffset + randomXIndex > circleMatrix.length ||
+      yOffset + randomYIndex > circleMatrix[xOffset + randomXIndex].length)
+    {
+      return null;
+    }
+
+    return circleMatrix[xOffset+randomXIndex][yOffset + randomYIndex];
 };
 
 function getRandomVisibleCircle(xOffset, yOffset, width, height){
-  while(true){
+  var count = 50;
+  while(count > 0){
     var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
 
-    if(typeof randomCircle != 'undefined' && randomCircle.isVisible())
+    if(randomCircle != null && typeof randomCircle != 'undefined' && randomCircle.isVisible())
         return randomCircle;
+
+    count--;
   }
+
+  return null;
 };
 
 function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
-    while(true){
-      var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
+  var count = 50;
+  while(count > 0){
+    var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
 
-      if(typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.innerCircleRadius == unSwappedRadius)
-        return randomCircle;
-    }
+    if(randomCircle != null && typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.innerCircleRadius == unSwappedRadius)
+      return randomCircle;
+
+    count--;
+  }
+
+  return null;
 };
 
 
