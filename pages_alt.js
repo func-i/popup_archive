@@ -155,7 +155,7 @@ function stopAll(){
   clearInterval(page7IntervalTimer);
 };
 
-var circleMatrices = new Array(8);
+var circleMatrices;
 var circleMatrix;
 
 function loadPage1(){
@@ -657,6 +657,11 @@ function swapCircles(){
 };
 
 function initSVGMatrix(){
+  if($('svg').length != 0)
+    $('svg').remove();
+
+  circleMatrices = new Array(8);
+
   var pageWidth = $('.page').width();
   boxWidth = 100;
   var numBoxWidthPerPage = Math.floor(pageWidth / boxWidth);
