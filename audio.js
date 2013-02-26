@@ -1,6 +1,55 @@
-var audioContext, audioSource, audioVolumeControl, noiseSource, noiseVolumeControl;
+var audioContext, bufferLoader, audioList;
 
-function startSound(audioSourceCircle, svgElem){
+function initAudio(){
+  audioContext = new webkitAudioContext();
+
+  audioList = [];
+
+  bufferLoader = new BufferLoader(
+    audioContext,
+    [
+      'MLKDream.ogg',
+      'sc_post.mp3'
+    ],
+    finishedLoadingAudio
+    );
+
+  bufferLoader.load();
+};
+
+function finishedLoadingAudio(bufferList){
+  for(var i = 0; i < bufferList.length; i++){
+    var source = audioContext.createBufferSource();
+    source.buffer = bufferList[i];
+    source.loop = true;
+    var volumeControl = audioContext.createGainNode();
+    source.connect(volumeControl);
+    volumeControl.connect(audioContext.destination);
+
+    volumeControl.gain.value = 0;
+
+    audioList.push({'source': source, 'volume':volumeControl});
+  }
+};
+
+function playAudio(index){
+  audioList[index].volume.gain.value = 1;
+  audioList[index].source.noteOn(0);
+};
+
+function pauseAudio(index){
+  audioList[index].volume.gain.value = 0;
+};
+
+function setPlaybackRate(rate){
+  for(var i = 0; i < audioList.length; i++){
+    audioList[i].source.playbackRate.value = rate;
+  }
+};
+
+
+/*
+function startSound(svgElem){
   audioContext = new webkitAudioContext();
   loadAudio();
   loadNoise();
@@ -36,7 +85,7 @@ function playSound(){
 function loadAudio(){
   var request = new XMLHttpRequest();
   request.open('get',
-    'MLKDream.ogg',
+    ,
     true);
   request.responseType = "arraybuffer";
 
@@ -92,4 +141,52 @@ function connectNoise(buffer) {
   noiseVolumeControl.gain.value = MAX_NOISE_GAIN;
   noiseSource.connect(noiseVolumeControl);
   noiseVolumeControl.connect(audioContext.destination);
-};
+};*/
+
+
+function BufferLoader(context, urlList, callback) {
+  this.context = context;
+  this.urlList = urlList;
+  this.onload = callback;
+  this.bufferList = new Array();
+  this.loadCount = 0;
+}
+
+BufferLoader.prototype.loadBuffer = function(url, index) {
+  // Load buffer asynchronously
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+  request.responseType = "arraybuffer";
+
+  var loader = this;
+
+  request.onload = function() {
+    // Asynchronously decode the audio file data in request.response
+    loader.context.decodeAudioData(
+      request.response,
+      function(buffer) {
+        if (!buffer) {
+          alert('error decoding file data: ' + url);
+          return;
+        }
+        loader.bufferList[index] = buffer;
+        if (++loader.loadCount == loader.urlList.length)
+          loader.onload(loader.bufferList);
+      },
+      function(error) {
+        console.error('decodeAudioData error', error);
+      }
+    );
+  }
+
+  request.onerror = function() {
+    alert('BufferLoader: XHR error');
+  }
+
+  request.send();
+}
+
+BufferLoader.prototype.load = function() {
+  for (var i = 0; i < this.urlList.length; ++i)
+  this.loadBuffer(this.urlList[i], i);
+}

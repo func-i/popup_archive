@@ -56,6 +56,8 @@ function scrollStopped(){
 };
 
 function init(){
+  initAudio();
+
   //Set the width of each page
   $('.page').width(window.innerWidth);
 
@@ -160,6 +162,56 @@ var circleMatrix;
 
 function loadPage1(){
   circleMatrix = circleMatrices[0];
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    for(var y = 0; y < circleMatrix[x].length; y++){
+      var circle = circleMatrix[x][y];
+      circle.move(circle.x + 36*Math.random() - 18, circle.y + 36*Math.random() - 18);
+
+      circle.audioIndex = Math.floor(2*Math.random());
+
+      circle.setHoverHandler(function(){
+        hoverEnterHandler.call(this);
+        playAudio(this.audioIndex);
+      },
+      function(){
+        hoverLeaveHandler.call(this);
+        pauseAudio(this.audioIndex);
+      });
+    }
+  }
+
+
+  var lastMouseEvent;
+  var wasTriggered = true;
+  console.log('hello');
+  setInterval(function()
+  {
+    if(wasTriggered){
+      wasTriggered = false;
+
+      $(window).one('mousemove', function(e) {
+        wasTriggered = true;
+
+        var newMouseEvent = {pageX: e.pageX, pageY: e.pageY, time: performance.now()};
+
+        if(lastMouseEvent == null){
+          lastMouseEvent = newMouseEvent;
+          return;
+        }
+
+        var moveSize = Math.sqrt(Math.pow((newMouseEvent.pageX - lastMouseEvent.pageX), 2)*Math.pow((newMouseEvent.pageY - lastMouseEvent.pageY), 2));
+        var movePerTime = moveSize / (newMouseEvent.time - lastMouseEvent.time);
+        setPlaybackRate(Math.max(movePerTime/3, 1));
+
+        lastMouseEvent = newMouseEvent;
+      });
+    }
+    else{
+      setPlaybackRate(1);
+    }
+  }, 100);
+
 
   //Replace random circle with AudioSource Circle
 /*  var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
@@ -774,17 +826,8 @@ function clickHandler(){
 
   that.clickOn = true;
 
-  that.scale(0.5).startBroadcast(null, null, that.currentOuterRadius()*5, 0.7).colorOn().callOnNeighbours(1, function()
-  {
-    var xDistance = this.x - that.x;
-    var yDistance = this.y - that.y;
-    var newXDistance = (boxWidth + this.currentOuterRadius()) * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119);
-    var newYDistance = (boxWidth + this.currentOuterRadius()) * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119);
-    var newXCoor = that.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
-    var newYCoor = that.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
-
-    this.move(newXCoor, newYCoor,  BROADCAST_NEIGHBOUR_MOVE_TIME, null, null, 'bounce').colorOn();
-  });
+  that.scale(0.5).startBroadcast(BROADCAST_FREQUENCY*3, null, that.currentOuterRadius() + 2*boxWidth, 0.7).colorOn().callOnNeighbours(1, function()
+  { this.pushedByCircle(that, boxWidth/3); });
 };
 
 function hoverEnterHandler(){

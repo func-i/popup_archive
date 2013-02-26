@@ -307,6 +307,7 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
     'opacity': startOpacity
   });
 
+  var that = this;
   var broadcastAnim = Raphael.animation({r: endRadius, opacity: 0}, broadcastTime, easing, function(){
     if(typeof callback == 'function')
       callback();
@@ -324,10 +325,11 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
 Circle.prototype.startBroadcast = function(broadcastFrequency, startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, easing, delay){
   broadcastFrequency = broadcastFrequency != null  ? broadcastFrequency : BROADCAST_FREQUENCY;
 
+  this.stopBroadcast();
+  this.sendBroadcast(startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, null, easing);
+
   var that = this;
-  that.stopBroadcast();
-  that.sendBroadcast(startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, null, easing);
-  that.broadcastTimer = setInterval(function(){that.sendBroadcast(startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, null, easing, delay)}, broadcastFrequency);
+  this.broadcastTimer = setInterval(function(){that.sendBroadcast(startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, null, easing, delay)}, broadcastFrequency);
 
   return this;
 };
@@ -337,11 +339,41 @@ Circle.prototype.stopBroadcast = function(){
   return this;
 };
 
-Circle.prototype.vibrate = function(){
-  var xDistance = 2 * Math.random() - 2;
-  var yDistance = 2 * Math.random() - 2;
+Circle.prototype.vibrateOn = function(){
+  var xDistance = 4 * Math.random() - 2;
+  var yDistance = 4 * Math.random() - 2;
   var that = this;
-  this.move(this.x + xDistance, this.y + yDistance, 5, function(){ that.vibrate(); });
+  this.move(this.x + xDistance, this.y + yDistance, 30, function(){ that.vibrateOn(); });
+  //  var curPosition = this.currentPosition();
+  //this.move(curPosition[0] + xDistance, curPosition[1] + yDistance, 5, function(){ that.vibrateOn(); });
+};
+
+Circle.prototype.vibrateOff = function(){
+  this.move();
+};
+
+Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
+  if(strengthPerPixel < 10)
+    return;
+  var xDistance = this.x - circle.x;
+  var yDistance = this.y - circle.y;
+  var newXDistance = xDistance + strengthPerPixel * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119) * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
+  var newYDistance = yDistance + strengthPerPixel * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119) * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
+
+  var newXCoor = circle.x + newXDistance;
+  var newYCoor = circle.y + newYDistance;
+
+  var that = this;
+  this.move(newXCoor, newYCoor, 500, function()
+    {
+      that.move(null, null, 700);
+      that.callOnNeighbours(1, function()
+      {
+        //Only call on neighbours that increase distance
+        this.pushedByCircle(circle, strengthPerPixel/2);
+      });
+    },
+  'easeIn');
 };
 
 Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, connectTime, callback, easing, delay){
