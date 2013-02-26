@@ -686,7 +686,7 @@ function connectRandomCircle(){
   }
 
   var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
-  newConnectedCircle.colorOn(CONNECT_TIME);
+  newConnectedCircle.lockColor().colorOn(CONNECT_TIME);
 
   var path = lastConnectedCircle.connectNeighbourWithArc(newConnectedCircle, null, null, function(){
     newConnectedCircle.colorOn().colorOn();
