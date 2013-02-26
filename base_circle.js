@@ -13,6 +13,8 @@ Circle.prototype.init = function(){
   this.setBaseInnerRadius();
   this.setBaseOuterRadius();
 
+  this.colorLockCounter = 0;
+
   this.draw();
   this.show();
 
@@ -23,7 +25,7 @@ Circle.prototype.setInnerColor = function(color){
   this.innerCircleColor = color != null  ? color : COLORS[Math.floor(COLORS.length  * Math.random())];
 
   if(this.isColorOn)
-    this.colorOn();
+    this.colorOn(0);
 
   return this;
 };
@@ -32,20 +34,20 @@ Circle.prototype.setOuterColor = function(color){
   this.outerCircleColor = color != null  ? color : COLORS[Math.floor(COLORS.length  * Math.random())];
 
   if(this.isColorOn)
-    this.colorOn();
+    this.colorOn(0);
 
   return this;
 };
 
 Circle.prototype.setBaseInnerRadius = function(radius){
   this.innerCircleRadius = radius != null  ? radius : ((MAX_INNER_CIRCLE_RADIUS - MIN_INNER_CIRCLE_RADIUS) * Math.random() + MIN_INNER_CIRCLE_RADIUS);
-  this.scale();
+  this.scale(null, 0);
   return this;
 };
 
 Circle.prototype.setBaseOuterRadius = function(radius){
   this.outerCircleRadius = radius != null  ?  radius : OUTER_CIRCLE_RADIUS;
-  this.scale();
+  this.scale(null, 0);
   return this;
 };
 
@@ -70,17 +72,36 @@ Circle.prototype.isVisible = function(){
   return !this.isHidden;
 };
 
-Circle.prototype.addClickHandler = function(callback){
-  var that = this;
-  this.svgSet.click(function(){callback.call(that);});
+Circle.prototype.setClickHandler = function(callback){
+  if(this.clickHandler != null)
+    this.removeClickHandler(this.clickHandler);
+
+  this.clickHandler = callback.bind(this);
+  this.svgSet.click(this.clickHandler);
   return this;
 };
 
-Circle.prototype.addHoverHandler = function(hoverInCallback, hoverOutCallback){
-  var that = this;
-  this.svgSet.hover(function(){hoverInCallback.call(that);}, function(){hoverOutCallback.call(that);});
+Circle.prototype.removeClickHandler = function(){
+  this.svgSet.unclick(this.clickHandler);
   return this;
 };
+
+Circle.prototype.setHoverHandler = function(hoverInCallback, hoverOutCallback){
+  if(this.hoverInHandler != null || this.hoverOutHandler != null)
+    this.removeHoverHandler(this.hoverInHandler, this.hoverOutHandler);
+
+  this.hoverInHandler = hoverInCallback.bind(this);
+  this.hoverOutHandler = hoverOutCallback.bind(this);
+
+  this.svgSet.hover(this.hoverInHandler, this.hoverOutHandler);
+  return this;
+};
+
+Circle.prototype.removeHoverHandler = function(){
+  this.svgSet.unhover(this.hoverInHandler, this.hoverOutHandler);
+  return this;
+};
+
 
 Circle.prototype.draw = function(){
   this.innerCircle = this.svgElem.circle(this.x, this.y, this.innerCircleRadius);
@@ -138,6 +159,17 @@ Circle.prototype.scale = function(scale, scaleTime, callback, easing, delay){
   return this;
 };
 
+Circle.prototype.lockColor = function(){
+  this.colorLockCounter++;
+  return this;
+};
+
+Circle.prototype.unlockColor = function(){
+  this.colorLockCounter--;
+  return this;
+};
+
+
 Circle.prototype.colorOn = function(colorTime, callback, easing, delay){
   if(typeof this.innerCircle == 'undefined' || typeof this.outerCircle == 'undefined')
     return this;
@@ -176,6 +208,9 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
   colorTime = colorTime != null  ? colorTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+
+  if(this.colorLockCounter > 0)
+    return this;
 
   if(this.colorAnimations){
     this.innerCircle.stop(this.colorAnimations[0]);
@@ -302,6 +337,13 @@ Circle.prototype.stopBroadcast = function(){
   return this;
 };
 
+Circle.prototype.vibrate = function(){
+  var xDistance = 2 * Math.random() - 2;
+  var yDistance = 2 * Math.random() - 2;
+  var that = this;
+  this.move(this.x + xDistance, this.y + yDistance, 5, function(){ that.vibrate(); });
+};
+
 Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, connectTime, callback, easing, delay){
   strokeColor = strokeColor != null  ? strokeColor : CONNECT_COLOR;
   connectTime = connectTime != null  ? connectTime : CONNECT_TIME;
@@ -384,7 +426,11 @@ Circle.prototype.removePath = function(path, removeTime, callback, easing, delay
 
 Circle.prototype.getConnectedPaths = function(){
   return this.connectedPaths;
-}
+};
+
+Circle.prototype.hasConnectedPaths = function(){
+  return this.connectedPaths != null && this.connectedPaths.length != 0;
+};
 
 Circle.prototype.setBlur = function(blurSize){
   this.innerCircle.blur(blurSize);
@@ -407,8 +453,7 @@ Circle.prototype.currentInnerRadius = function(){
 Circle.prototype.reset = function(resetTime, callback, easing, scale, x, y, delay){
   resetTime = resetTime != null  ? resetTime : RESET_TIME;
 
-  this.scale(scale, resetTime, null, easing, delay).colorOff(resetTime, null, easing, delay).move(x, y, resetTime, null, easing, delay).removeConnectedPaths(resetTime, callback, easing, delay).stopBroadcast().setBlur('none');
-  this.clickOn = false;
+  this.scale(scale, resetTime, null, easing, delay).colorOff(resetTime, null, easing, delay).move(x, y, resetTime, callback, easing, delay).stopBroadcast().setBlur('none');
 
   return this;
 };

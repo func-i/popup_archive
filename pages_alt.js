@@ -161,20 +161,6 @@ var circleMatrix;
 function loadPage1(){
   circleMatrix = circleMatrices[0];
 
-  //Set handlers
-  for(var x = circleMatrix.length - 1; x >= 0; x--){
-    for(var y = 0; y < circleMatrix[x].length; y++){
-      var that = circleMatrix[x][y];
-      that.addClickHandler(page1ClickHandler);
-      that.addHoverHandler(
-        function(){ this.scale(1.5).colorOn(); },
-        function(){
-          if(this.clickOn) this.callOnNeighbours(1, function(){this.reset();});
-          this.reset();
-        }
-      );
-    }
-  }
   //Replace random circle with AudioSource Circle
 /*  var replaceCircleForAudio = getRandomCircle(1, 1, circleMatrix.length - 2, circleMatrix[0].length - 2);
   var audioSourceCircle =  new AudioSourceCircle(replaceCircleForAudio.x, replaceCircleForAudio.y, replaceCircleForAudio.svgElem, replaceCircleForAudio.circleMatrix);
@@ -191,28 +177,10 @@ function loadPage1(){
   //startSound(audioSourceCircle, $('#page_1 svg'));
 };
 
-function page1ClickHandler(clickedCircle){
-  var that = this;
-
-  that.clickOn = true;
-
-  that.scale(0.5).startBroadcast(null, null, null, 0.7).colorOn().callOnNeighbours(1, function()
-  {
-    var xDistance = this.x - that.x;
-    var yDistance = this.y - that.y;
-    var newXDistance = (boxWidth + this.currentOuterRadius()) * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119);
-    var newYDistance = (boxWidth + this.currentOuterRadius()) * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119);
-    var newXCoor = that.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
-    var newYCoor = that.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
-
-    this.move(newXCoor, newYCoor,  BROADCAST_NEIGHBOUR_MOVE_TIME, null, null, 'bounce').colorOn();
-  });
-};
-
 function loadPage2(){};
 
 
-function loadPage3(){}
+function loadPage3(){};
 
 function loadPage4(){};
 
@@ -264,10 +232,11 @@ function loadPage7(){
             !circleMatrix[x+1][y -1].isVisible()
           ))
         {
-          circleMatrix[x][y].colorOn();
+          circleMatrix[x][y].lockColor().colorOn();
         }
-        else
+        else{
           circleMatrix[x][y].colorOff();
+        }
       }
       else if(x == rightPositionOfContentInBoxes)
         circleMatrix[x][y].hide();
@@ -323,13 +292,13 @@ function startPage4(){
   circleMatrix = circleMatrices[3];
 
   if(circleMatrix.length > 4 && circleMatrix[4].length > 3 && typeof circleMatrix[4][3] != 'undefined'){
-    circleMatrix[4][3].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
+    circleMatrix[4][3].removeClickHandler().removeHoverHandler().scale(5.5, 1500).lockColor().colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
       this.hide(1500);
     });
   }
 
   if(circleMatrix.length > 9 && circleMatrix[9].length > 1 && typeof circleMatrix[9][1] != 'undefined'){
-    circleMatrix[9][1].scale(5.5, 1500).colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
+    circleMatrix[9][1].removeClickHandler().removeHoverHandler().scale(5.5, 1500).lockColor().colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
       this.hide(1500);
     });
   }
@@ -441,7 +410,7 @@ function startPage8(){
     circleMatrix[x][hideHeight].setInnerColor(innerColor);
     circleMatrix[x][hideHeight].setOuterColor(outerColor);
 
-    circleMatrix[x][hideHeight].colorOn(1000, null, null, delay);
+    circleMatrix[x][hideHeight].lockColor().colorOn(1000, null, null, delay);
   }
 };
 
@@ -527,33 +496,25 @@ function returnSwappedRadiuses(){
   var circle1Fill = circle1.innerCircleColor;
   var circle2Fill = circle2.innerCircleColor;
 
-  circle1.colorOn();
-  circle2.colorOn();
+  circle1.lockColor().colorOn();
+  circle2.lockColor().colorOn();
 
   circle1.innerCircle.animate({opacity: 0}, 2000, function(){
-    circle1.innerCircle.attr({
-      r: circle2Radius,
-      fill: circle2Fill
-    });
+    circle1.setBaseInnerRadius(circle2Radius).setInnerColor(circle2Fill);
 
     var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
-      circle1.colorOff(1500);
+      circle1.unlockColor().colorOff(1500);
     });
 
     circle1.innerCircle.animate(swapAnim.delay(2000));
   });
 
   circle2.innerCircle.animate({opacity: 0}, 2000, function(){
-    circle2.innerCircle.attr({
-      r: circle1Radius,
-      fill: circle1Fill
-    });
+    circle2.setBaseInnerRadius(circle1Radius).setInnerColor(circle1Fill);
 
-    var swapAnim = Raphael.animation({
-      opacity: 1
-    }, 1000, function(){
-      circle2.colorOff(1500);
-    })
+    var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
+      circle2.unlockColor().colorOff(1500);
+    });
 
     circle2.innerCircle.animate(swapAnim.delay(2000));
   });
@@ -697,8 +658,11 @@ function initSVGMatrix(){
           continue;
         }
 
-        circleMatrix[xArrIndex].push(new Circle(svgElem, pageX + pageWidth*pageNumber, pageY, circleMatrix, xArrIndex, yArrIndex));
-        circleMatrix[xArrIndex][yArrIndex].init();
+        var circle = new Circle(svgElem, pageX + pageWidth*pageNumber, pageY, circleMatrix, xArrIndex, yArrIndex);
+        circle.init();
+        circle.setClickHandler(clickHandler);
+        circle.setHoverHandler(hoverEnterHandler, hoverLeaveHandler);
+        circleMatrix[xArrIndex].push(circle);
       }
     }
   }
@@ -708,8 +672,8 @@ function connectRandomCircle(){
   if(pathQueue.length > 5){
     var removedPathArr = pathQueue.shift();
     removedPathArr[0].removePath(removedPathArr[1], null, function(){
-      if(removedPathArr[0].getConnectedPaths().length == 0)
-        removedPathArr[0].colorOff();
+      if(!removedPathArr[0].hasConnectedPaths())
+        removedPathArr[0].unlockColor().colorOff();
     });
   }
 
@@ -718,14 +682,14 @@ function connectRandomCircle(){
 
   if(typeof lastConnectedCircle == 'undefined'){
     lastConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
-    lastConnectedCircle.colorOn();
+    lastConnectedCircle.lockColor().colorOn();
   }
 
   var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
   newConnectedCircle.colorOn(CONNECT_TIME);
 
   var path = lastConnectedCircle.connectNeighbourWithArc(newConnectedCircle, null, null, function(){
-    newConnectedCircle.colorOn();
+    newConnectedCircle.colorOn().colorOn();
   });
 
   pathQueue.push([lastConnectedCircle, path]);
@@ -801,5 +765,43 @@ function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwap
 
 function getLeftPositionOfContentInBoxes(pageNumber){
   return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / boxWidth);
-}
+};
+
+function clickHandler(){
+  if(!this.isVisible()) return;
+
+  var that = this;
+
+  that.clickOn = true;
+
+  that.scale(0.5).startBroadcast(null, null, that.currentOuterRadius()*5, 0.7).colorOn().callOnNeighbours(1, function()
+  {
+    var xDistance = this.x - that.x;
+    var yDistance = this.y - that.y;
+    var newXDistance = (boxWidth + this.currentOuterRadius()) * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119);
+    var newYDistance = (boxWidth + this.currentOuterRadius()) * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119);
+    var newXCoor = that.x + newXDistance * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
+    var newYCoor = that.y + newYDistance * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
+
+    this.move(newXCoor, newYCoor,  BROADCAST_NEIGHBOUR_MOVE_TIME, null, null, 'bounce').colorOn();
+  });
+};
+
+function hoverEnterHandler(){
+  if(!this.isVisible()) return;
+
+  this.scale(1.5).lockColor().colorOn();
+};
+
+function hoverLeaveHandler(){
+  if(!this.isVisible()) return;
+
+  if(this.clickOn)
+    this.callOnNeighbours(1, function(){
+      this.reset();
+    });
+
+  this.unlockColor().reset();
+  this.clickOn = false;
+};
 
