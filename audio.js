@@ -33,11 +33,13 @@ function finishedLoadingAudio(bufferList){
 };
 
 function playAudio(index){
+  if(index >= audioList.length) return;
   audioList[index].volume.gain.value = 1;
   audioList[index].source.noteOn(0);
 };
 
 function pauseAudio(index){
+  if(index >= audioList.length) return;
   audioList[index].volume.gain.value = 0;
 };
 

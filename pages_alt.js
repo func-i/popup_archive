@@ -202,7 +202,7 @@ function loadPage1(){
 
         var moveSize = Math.sqrt(Math.pow((newMouseEvent.pageX - lastMouseEvent.pageX), 2)*Math.pow((newMouseEvent.pageY - lastMouseEvent.pageY), 2));
         var movePerTime = moveSize / (newMouseEvent.time - lastMouseEvent.time);
-        setPlaybackRate(Math.max(movePerTime/3, 1));
+        setPlaybackRate(movePerTime/3);
 
         lastMouseEvent = newMouseEvent;
       });
