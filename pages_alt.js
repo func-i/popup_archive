@@ -44,7 +44,7 @@ function listenToScroll(){
 
   var calculatedHorizontalScroll = -pagesWidth * (currentVerticalScroll / bodyHeight);
 
-  $('#pages_container').stop().animate({'left': calculatedHorizontalScroll}, 10);
+  $('#pages_container').animate({'left': calculatedHorizontalScroll}, 10);
 };
 
 function scrollStopped(){
@@ -73,6 +73,7 @@ function init(){
   loadPage8();
 
   listenToScroll();
+  $(window).scroll();
   if(lastStoredPage){
     var tmpPage = lastStoredPage;
     lastStoredPage = null;
@@ -146,9 +147,7 @@ function gotoPage(pageNumber){
 }
 
 function stopAll(){
-  //pauseSound();
-  pauseAllAudio();
-  clearTimeout(page2Timer);
+  //pauseAllAudio();
   clearInterval(page2IntervalTimer);
   clearInterval(page3IntervalTimer);
   resetPage4();
@@ -156,6 +155,8 @@ function stopAll(){
   resetPage5();
   clearInterval(page6IntervalTimer);
   clearInterval(page7IntervalTimer);
+  clearInterval(page8IntervalTimer);
+  resetPage8();
 };
 
 var circleMatrices;
@@ -167,7 +168,8 @@ function loadPage1(){
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
       var circle = circleMatrix[x][y];
-      circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
+      //circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
+      circle.isRandomPosition = true;
 
       circle.audioIndex = Math.floor(2*Math.random());
 
@@ -176,8 +178,22 @@ function loadPage1(){
         playAudio(this.audioIndex);
       },
       function(){
-        hoverLeaveHandler.call(this);
+        if(!this.isVisible()) return;
+
         pauseAudio(this.audioIndex);
+
+        if(this.clickOn)
+          this.callOnNeighbours(1, function(){
+            this.reset();
+          });
+
+        if(this.isRandomPosition)
+          this.unlockColor().reset(null, null, 'elastic');
+        else
+          this.unlockColor().reset();
+
+        this.isRandomPosition = false;
+        this.clickOn = false;
       });
     }
   }
@@ -302,20 +318,62 @@ function loadPage7(){
   }
 };
 
-function loadPage8(){};
+function loadPage8(){
+  circleMatrix = circleMatrices[7];
+
+  resetPage8();
+};
+
+function resetPage8(){
+  circleMatrix = circleMatrices[7];
+
+  var firstHideHeight = circleMatrix[0].length - 1;
+  var secondHideHeight = Math.floor((circleMatrix[0].length - 1) / 2);
+  var thirdHideHeight = 0;
+
+  for(var x = 0; x < circleMatrix.length; x++){
+    if(x < Math.floor(circleMatrix.length/3)){
+      while(firstHideHeight < circleMatrix[x].length && (typeof circleMatrix[x][firstHideHeight] == 'undefined' || !circleMatrix[x][firstHideHeight].isVisible()))
+        firstHideHeight++;
+      hideHeight = firstHideHeight;
+      innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+      outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
+    }
+    else if(x < 2*Math.floor(circleMatrix.length/3)){
+      while(secondHideHeight < circleMatrix[x].length && (typeof circleMatrix[x][secondHideHeight] == 'undefined' || !circleMatrix[x][secondHideHeight].isVisible()))
+        secondHideHeight++;
+      hideHeight = secondHideHeight;
+      innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+      outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
+    }
+    else{
+      while(thirdHideHeight < circleMatrix[x].length && (typeof circleMatrix[x][thirdHideHeight] == 'undefined' || !circleMatrix[x][thirdHideHeight].isVisible()))
+        thirdHideHeight++;
+      hideHeight = thirdHideHeight;
+      innerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+      outerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
+    }
+
+    for(var y = 0 ; y < hideHeight; y++){
+      if(typeof circleMatrix[x][y] != 'undefined')
+        circleMatrix[x][y].hide();
+    }
+
+    if(hideHeight == circleMatrix[x].length || typeof circleMatrix[x][hideHeight] == 'undefined')
+      continue;
+
+    circleMatrix[x][hideHeight].setInnerColor(innerColor);
+    circleMatrix[x][hideHeight].setOuterColor(outerColor);
+    circleMatrix[x][hideHeight].unlockColor().colorOff();
+  }
+}
 
 function startPage1(){
   stopAll();
-
-  circleMatrix = circleMatrices[0];
-
-  playSound();
 };
 
 var pathQueue = [];
 var page2IntervalTimer;
-var page2Timer;
-var page2CurrentBlur;
 var lastConnectedCircle;
 function startPage2(){
   stopAll();
@@ -323,7 +381,6 @@ function startPage2(){
   circleMatrix = circleMatrices[1];
 
   page2IntervalTimer = setInterval(connectRandomCircle, 2000);
-  page2CurrentBlur = 0;
   blurCircles();
 };
 
@@ -336,7 +393,7 @@ function startPage3(){
 
   //Bubble from bottom to top
   bubbleArray = bubbleArray || new Array(circleMatrix.length);
-  page3IntervalTimer = setInterval(bubbleToTop, 250);
+  page3IntervalTimer = setInterval(bubbleToTop, 500);
 };
 
 function startPage4(){
@@ -346,13 +403,17 @@ function startPage4(){
 
   if(circleMatrix.length > 4 && circleMatrix[4].length > 3 && typeof circleMatrix[4][3] != 'undefined'){
     circleMatrix[4][3].removeClickHandler().removeHoverHandler().scale(5.5, 1500).lockColor().colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
-      this.hide(1500);
-    });
+      this.hide(1200);
+    }).callOnNeighbours(2, function(){
+      this.pushedByCircle(circleMatrix[4][3], boxWidth*75, 1500);
+    });;
   }
 
   if(circleMatrix.length > 9 && circleMatrix[9].length > 1 && typeof circleMatrix[9][1] != 'undefined'){
     circleMatrix[9][1].removeClickHandler().removeHoverHandler().scale(5.5, 1500).lockColor().colorOn(1500).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){
-      this.hide(1500);
+      this.hide(1200);
+    }).callOnNeighbours(2, function(){
+      this.pushedByCircle(circleMatrix[9][1], boxWidth*75, 1500);
     });
   }
 };
@@ -379,7 +440,7 @@ function startPage5(){
   circleMatrix = circleMatrices[4];
 
   currentColoredColumnIndex = undefined;
-  page5IntervalTimer = setInterval(colorColumn, 700);
+  page5IntervalTimer = setInterval(colorColumn, 1000);
 };
 
 function resetPage5(){
@@ -418,53 +479,38 @@ function startPage7(){
   page7IntervalTimer = setInterval(swapCircles, 2000);
 };
 
+var currentPage8Section;
+var page8IntervalTimer;
 function startPage8(){
   stopAll();
 
   circleMatrix = circleMatrices[7];
 
-  var hideHeight, innerColor, outerColor;
-  for(var x = 0; x < circleMatrix.length; x++){
-    if(x < Math.floor(circleMatrix.length/3)){
-      hideHeight = circleMatrix[x].length - 1;
-      innerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
-      outerColor = BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())];
-      delay = 2000;
-    }
-    else if(x < 2*Math.floor(circleMatrix.length/3)){
-      hideHeight = Math.floor((circleMatrix[x].length - 1) / 2);
-      innerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
-      outerColor = GREEN_COLORS[Math.floor(GREEN_COLORS.length  * Math.random())];
-      delay = 8000;
-    }
-    else{
-      hideHeight = 0;
-      innerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
-      outerColor = RED_COLORS[Math.floor(RED_COLORS.length  * Math.random())];
-      delay = 14000;
-    }
+  currentPage8Section = 0;
 
-    for(var y = 0; y < hideHeight; y++)
-      if(typeof circleMatrix[x][y] != 'undefined')
-        circleMatrix[x][y].hide();
+  page8IntervalTimer = setInterval(function(){
+    for(var x = 0; x < circleMatrix.length; x++){
+      if(currentPage8Section == 0 && x >= Math.floor(circleMatrix.length/3))
+        continue;
+      else if(currentPage8Section == 1 && x >= 2*Math.floor(circleMatrix.length/3))
+        continue;
+      else if(currentPage8Section == 2 && x < 2*Math.floor(circleMatrix.length/3))
+        continue;
 
-
-    var colorNotOn = true;
-    while(colorNotOn && hideHeight < circleMatrix[x].length){
-      if(typeof circleMatrix[x][hideHeight] != 'undefined')
-        colorNotOn = false
-      else
-        hideHeight++;
+      var colorOn = false;
+      for(var y = 0 ; y < circleMatrix[x].length; y++){
+        if(!colorOn && typeof circleMatrix[x][y] != 'undefined' && circleMatrix[x][y].isVisible()){
+          circleMatrix[x][y].lockColor().colorOn(1000, null, null);
+          colorOn = true;
+        }
+      }
     }
 
-    if(hideHeight == circleMatrix[x].length || typeof circleMatrix[x][hideHeight] == 'undefined')
-      continue;
+    currentPage8Section++;
 
-    circleMatrix[x][hideHeight].setInnerColor(innerColor);
-    circleMatrix[x][hideHeight].setOuterColor(outerColor);
-
-    circleMatrix[x][hideHeight].lockColor().colorOn(1000, null, null, delay);
-  }
+    if(currentPage8Section > 2)
+      clearInterval(page8IntervalTimer);
+  }, 2000);
 };
 
 function resetPage6(){
@@ -501,11 +547,13 @@ function bubbleToTop(){
       else
         nextBubble = circleMatrix[x][currentBubble.matrixYIndex - 1];
 
-      currentBubble.reset(1400, null, null, 0.5);
+      //currentBubble.reset(1400, null, null, 0.5);
     }
 
     if(typeof nextBubble != 'undefined'){
-      nextBubble.scale(1.5, 1400).colorOn();
+      nextBubble.colorOn().scale(1.5, 1000, function(){
+        this.reset(1000, null, null, 0.5);
+      });
 
       if(0 == nextBubble.matrixYIndex  || typeof circleMatrix[x][nextBubble.matrixYIndex] == 'undefined' || !circleMatrix[x][nextBubble.matrixYIndex].isVisible())
         nextBubble.sendBroadcast(nextBubble.currentOuterRadius(), boxWidth + nextBubble.currentOuterRadius(), 0.7);
@@ -519,7 +567,7 @@ function colorColumn(){
   if(typeof currentColoredColumnIndex != 'undefined'){
     for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
       if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined')
-        circleMatrix[currentColoredColumnIndex][y].colorOff();
+        circleMatrix[currentColoredColumnIndex][y].colorOff(1000);
     }
 
     currentColoredColumnIndex = currentColoredColumnIndex + 1
@@ -530,7 +578,7 @@ function colorColumn(){
 
   for(var y = 0; y < circleMatrix[currentColoredColumnIndex].length; y++){
     if(typeof circleMatrix[currentColoredColumnIndex][y] != 'undefined' && circleMatrix[currentColoredColumnIndex][y].isVisible())
-      circleMatrix[currentColoredColumnIndex][y].colorOn();
+      circleMatrix[currentColoredColumnIndex][y].colorOn(1000);
   }
 };
 
@@ -725,8 +773,10 @@ function connectRandomCircle(){
   if(pathQueue.length > 5){
     var removedPathArr = pathQueue.shift();
     removedPathArr[0].removePath(removedPathArr[1], null, function(){
+      removedPathArr[0].unlockColor();
+
       if(!removedPathArr[0].hasConnectedPaths())
-        removedPathArr[0].unlockColor().colorOff();
+        removedPathArr[0].colorOff();
     });
   }
 
@@ -739,10 +789,9 @@ function connectRandomCircle(){
   }
 
   var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
-  newConnectedCircle.lockColor().colorOn(CONNECT_TIME);
 
   var path = lastConnectedCircle.connectNeighbourWithArc(newConnectedCircle, null, null, function(){
-    newConnectedCircle.colorOn().colorOn();
+    newConnectedCircle.lockColor().colorOn(CONNECT_TIME);
   });
 
   pathQueue.push([lastConnectedCircle, path]);
@@ -753,8 +802,6 @@ function blurCircles(){
   var contentEl = $('#page_2 .content');
   var rightPositionOfContentInBoxes =   getLeftPositionOfContentInBoxes(2) + Math.ceil(contentEl.width() / boxWidth);
 
-  page2CurrentBlur += 0.1;
-
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++)
     {
@@ -762,14 +809,17 @@ function blurCircles(){
       if(typeof circleMatrix[x][y] == 'undefined')
         continue;
 
-      var blur = page2CurrentBlur * (rightPositionOfContentInBoxes - x) / rightPositionOfContentInBoxes;
-      if(blur > 0)
-        circleMatrix[x][y].setBlur(blur);
+      var blur = 5 * (rightPositionOfContentInBoxes - x) / rightPositionOfContentInBoxes;
+      if(blur > 0){
+        circleMatrix[x][y].setBlur(blur, 3000);
+        circleMatrix[x][y].desiredBlur = blur;
+        circleMatrix[x][y].setHoverHandler(hoverEnterHandler, function(){
+          hoverLeaveHandler.call(this);
+          this.setBlur(this.desiredBlur, 1000);
+        });
+      }
     }
   }
-
-  if(page2CurrentBlur < 10)
-    page2Timer = setTimeout(blurCircles, 200);
 };
 
 function getRandomCircle(xOffset, yOffset, width, height){
@@ -828,13 +878,31 @@ function clickHandler(){
   that.clickOn = true;
 
   that.scale(0.5).startBroadcast(BROADCAST_FREQUENCY*3, null, that.currentOuterRadius() + 2*boxWidth, 0.7).colorOn().callOnNeighbours(1, function()
-  { this.pushedByCircle(that, 25*boxWidth); });
+  {
+    startWave(that, this);
+  });
+};
+
+function startWave(pusher, pushee){
+  pushee.pushedByCircle(pusher, 25*boxWidth, 100, function(){
+    pushee.move(null, null, 300, null, 'easeOut');
+
+    var currentIndexDistance = Math.max(Math.abs(pusher.matrixYIndex - pushee.matrixYIndex), Math.abs(pusher.matrixXIndex - pushee.matrixXIndex));
+    pushee.callOnNeighbours(1, function(){
+      var neighbourIndexDistance = Math.max(Math.abs(pusher.matrixYIndex - this.matrixYIndex), Math.abs(pusher.matrixXIndex - this.matrixXIndex));
+      if(neighbourIndexDistance > currentIndexDistance)
+        startWave(pusher, this);
+    });
+  });
 };
 
 function hoverEnterHandler(){
   if(!this.isVisible()) return;
 
-  this.scale(1.5).lockColor().colorOn();
+  if(!this.clickOn)
+    this.scale(1.5);
+
+  this.lockColor().setBlur('none').colorOn();
 };
 
 function hoverLeaveHandler(){
@@ -845,7 +913,7 @@ function hoverLeaveHandler(){
       this.reset();
     });
 
-  this.unlockColor().reset(null, null, 'bounce');
+  this.unlockColor().reset();
   this.clickOn = false;
 };
 

@@ -136,6 +136,7 @@ Circle.prototype.scale = function(scale, scaleTime, callback, easing, delay){
   scaleTime = scaleTime != null ? scaleTime : GROWTH_TIME;
   easing = easing != null ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
 
 
   if(this.scaleAnimations){
@@ -144,7 +145,7 @@ Circle.prototype.scale = function(scale, scaleTime, callback, easing, delay){
   }
 
   this.scaleAnimations = new Array(2);
-  this.scaleAnimations[0] = Raphael.animation({r: this.innerCircleRadius * scale}, scaleTime, easing, callback);
+  this.scaleAnimations[0] = Raphael.animation({r: this.innerCircleRadius * scale}, scaleTime, easing);
   this.scaleAnimations[1] = Raphael.animation({r: this.outerCircleRadius * scale}, scaleTime, easing, callback);
 
   if( delay != null){
@@ -165,7 +166,7 @@ Circle.prototype.lockColor = function(){
 };
 
 Circle.prototype.unlockColor = function(){
-  this.colorLockCounter--;
+  this.colorLockCounter = Math.max(0, this.colorLockCounter - 1);
   return this;
 };
 
@@ -177,6 +178,8 @@ Circle.prototype.colorOn = function(colorTime, callback, easing, delay){
   colorTime = colorTime != null ? colorTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
+
 
   if(this.colorAnimations){
     this.innerCircle.stop(this.colorAnimations[0]);
@@ -184,7 +187,7 @@ Circle.prototype.colorOn = function(colorTime, callback, easing, delay){
   }
 
   this.colorAnimations = new Array(2);
-  this.colorAnimations[0] = Raphael.animation({fill: this.innerCircleColor}, colorTime, easing, callback);
+  this.colorAnimations[0] = Raphael.animation({fill: this.innerCircleColor}, colorTime, easing);
   this.colorAnimations[1] = Raphael.animation({stroke: this.outerCircleColor}, colorTime, easing, callback);
 
   if(delay != null){
@@ -208,6 +211,8 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
   colorTime = colorTime != null  ? colorTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
+
 
   if(this.colorLockCounter > 0)
     return this;
@@ -218,7 +223,7 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
   }
 
   this.colorAnimations = new Array(2);
-  this.colorAnimations[0] = Raphael.animation({fill: "#E0DCDC"}, colorTime, easing, callback);
+  this.colorAnimations[0] = Raphael.animation({fill: "#E0DCDC"}, colorTime, easing);
   this.colorAnimations[1] = Raphael.animation({stroke: "#E0DCDC"}, colorTime, easing, callback);
 
   if(delay != null){
@@ -243,6 +248,8 @@ Circle.prototype.setOpacity = function(opacity, opacityTime, callback, easing, d
   opacityTime = opacityTime != null  ? opacityTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
+
 
   if(this.opacityAnimations){
     this.innerCircle.stop(this.opacityAnimations[0]);
@@ -250,7 +257,7 @@ Circle.prototype.setOpacity = function(opacity, opacityTime, callback, easing, d
   }
 
   this.opacityAnimations = new Array(2);
-  this.opacityAnimations[0] = Raphael.animation({'opacity': opacity}, opacityTime, easing, callback);
+  this.opacityAnimations[0] = Raphael.animation({'opacity': opacity}, opacityTime, easing);
   this.opacityAnimations[1] = Raphael.animation({'opacity': opacity}, opacityTime, easing, callback);
 
   if(delay != null){
@@ -274,6 +281,8 @@ Circle.prototype.move = function(x, y,  moveTime, callback, easing, delay){
   moveTime = moveTime != null  ? moveTime : COLOR_TIME;
   easing = easing != null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
+
 
   if(this.moveAnimation){
     this.svgSet.stop(this.moveAnimation);
@@ -299,6 +308,7 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
   easing = easing != null  ? easing : "linear";
   delay = delay != null  ? delay : null;
 
+
   var pos = this.currentPosition();
   var broadcastCircle = this.svgElem.circle(pos[0], pos[1], startRadius);
   broadcastCircle.attr({
@@ -310,7 +320,7 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
   var that = this;
   var broadcastAnim = Raphael.animation({r: endRadius, opacity: 0}, broadcastTime, easing, function(){
     if(typeof callback == 'function')
-      callback();
+      callback.call(this);
     this.remove();
   });
 
@@ -324,6 +334,8 @@ Circle.prototype.sendBroadcast = function(startRadius, endRadius, startOpacity, 
 
 Circle.prototype.startBroadcast = function(broadcastFrequency, startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, easing, delay){
   broadcastFrequency = broadcastFrequency != null  ? broadcastFrequency : BROADCAST_FREQUENCY;
+  broadcastCallback = broadcastCallback != null ? broadcastCallback.bind(this) : null;
+
 
   this.stopBroadcast();
   this.sendBroadcast(startRadius, endRadius, startOpacity, color, width, broadcastTime, broadcastCallback, null, easing);
@@ -352,15 +364,18 @@ Circle.prototype.vibrateOff = function(){
   this.move();
 };
 
-Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
+Circle.prototype.pushedByCircle = function(circle, strengthPerPixelDistance, moveTime, callback){
+  moveTime = moveTime != null  ? moveTime : 100;
+  strengthPerPixelDistance = strengthPerPixelDistance != null  ? strengthPerPixelDistance : 5000;
+
   var xDistance = this.x - circle.x;
   var yDistance = this.y - circle.y;
   var absXDistance = Math.abs(xDistance);
   var absYDistance = Math.abs(yDistance);
 
   var angle = Math.abs(xDistance == 0 ? Math.PI/2 : Math.atan(yDistance/xDistance));
-  var xChange = Math.cos(angle) *  (strengthPerPixel / (xDistance == 0 ? 1 : absXDistance));
-  var yChange = Math.sin(angle) *  (strengthPerPixel / (yDistance == 0 ? 1 : absYDistance));
+  var xChange = Math.cos(angle) *  (strengthPerPixelDistance / (xDistance == 0 ? 1 : absXDistance));
+  var yChange = Math.sin(angle) *  (strengthPerPixelDistance / (yDistance == 0 ? 1 : absYDistance));
 
   if(xChange < 5 && yChange < 5)
     return;
@@ -370,19 +385,7 @@ Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
 
   var currentIndexDistance = Math.max(Math.abs(circle.matrixYIndex - this.matrixYIndex), Math.abs(circle.matrixXIndex - this.matrixXIndex));
 
-  var that = this;
-  this.move(newXCoor, newYCoor, 100, function()
-    {
-      that.move(null, null, 300, null, 'easeOut');
-      that.callOnNeighbours(1, function()
-      {
-        //Only call on neighbours that increase distance
-        var neighbourIndexDistance = Math.max(Math.abs(circle.matrixYIndex - this.matrixYIndex), Math.abs(circle.matrixXIndex - this.matrixXIndex));
-        if(neighbourIndexDistance > currentIndexDistance)
-          this.pushedByCircle(circle, strengthPerPixel);
-      });
-    },
-  'easeOut');
+  this.move(newXCoor, newYCoor, moveTime, callback, 'easeOut');
 };
 
 Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, connectTime, callback, easing, delay){
@@ -390,6 +393,7 @@ Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, conn
   connectTime = connectTime != null  ? connectTime : CONNECT_TIME;
   easing = easing !=null  ? easing : "easeIn";
   delay = delay != null  ? delay : null;
+  callback = callback != null ? callback.bind(this) : null;
 
   var path = this.svgElem.path("M" + this.x + " " + this.y);
   path.attr('stroke', strokeColor);
@@ -473,9 +477,27 @@ Circle.prototype.hasConnectedPaths = function(){
   return this.connectedPaths != null && this.connectedPaths.length != 0;
 };
 
-Circle.prototype.setBlur = function(blurSize){
-  this.innerCircle.blur(blurSize);
-  this.outerCircle.blur(blurSize);
+Circle.prototype.setBlur = function(blurSize, blurTime){
+  if(blurTime != null){
+    var currentBlur = 0;
+    var blurPerMillisecond = blurSize / blurTime;
+
+    var that = this;
+    var blurIntervalTimer = setInterval(function(){
+      currentBlur = currentBlur + blurPerMillisecond*200;
+
+      that.innerCircle.blur(currentBlur);
+      that.outerCircle.blur(currentBlur);
+
+      if(currentBlur >= blurSize)
+        clearInterval(blurIntervalTimer);
+    }, 200)
+  }
+  else{
+    this.innerCircle.blur(blurSize);
+    this.outerCircle.blur(blurSize);
+  }
+
   return this;
 };
 
