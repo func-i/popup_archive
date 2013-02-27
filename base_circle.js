@@ -371,9 +371,9 @@ Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
   var currentIndexDistance = Math.max(Math.abs(circle.matrixYIndex - this.matrixYIndex), Math.abs(circle.matrixXIndex - this.matrixXIndex));
 
   var that = this;
-  this.move(newXCoor, newYCoor, 300, function()
+  this.move(newXCoor, newYCoor, 100, function()
     {
-      that.move(null, null, 100);
+      that.move(null, null, 300, null, 'easeOut');
       that.callOnNeighbours(1, function()
       {
         //Only call on neighbours that increase distance
