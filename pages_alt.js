@@ -166,7 +166,7 @@ function loadPage1(){
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
       var circle = circleMatrix[x][y];
-      circle.move(circle.x + 500*Math.random() - 250, circle.y + 500*Math.random() - 250);
+      circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
 
       circle.audioIndex = Math.floor(2*Math.random());
 
