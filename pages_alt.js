@@ -185,9 +185,7 @@ function loadPage1(){
         pauseAudio(this.audioIndex);
 
         if(this.clickOn)
-          this.callOnNeighbours(1, function(){
-            this.reset();
-          });
+          clearInterval(broadcastIntervalTimer);
 
         if(this.isRandomPosition)
           this.unlockColor().reset(null, null, 'elastic');
@@ -876,6 +874,7 @@ function getLeftPositionOfContentInBoxes(pageNumber){
   return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / boxWidth);
 };
 
+var broadcastIntervalTimer;
 function clickHandler(){
   if(!this.isVisible()) return;
 
@@ -883,10 +882,18 @@ function clickHandler(){
 
   that.clickOn = true;
 
-  that.scale(0.5).startBroadcast(BROADCAST_FREQUENCY*3, null, that.currentOuterRadius() + 2*boxWidth, 0.7).colorOn().callOnNeighbours(1, function()
+  that.scale(0.5).colorOn();
+
+  var that = this;
+  if(broadcastIntervalTimer)
+    clearInterval(broadcastIntervalTimer);
+
+  that.sendBroadcast(null, that.currentOuterRadius() + 6*boxWidth, 0.7, null, null, 800).callOnNeighbours(1, function(){startWave(that, this);});
+
+  broadcastIntervalTimer = setInterval(function()
   {
-    startWave(that, this);
-  });
+    that.sendBroadcast(null, that.currentOuterRadius() + 6*boxWidth, 0.7, null, null, 800).callOnNeighbours(1, function(){startWave(that, this);});
+  }, 1000);
 };
 
 function startWave(pusher, pushee){
@@ -915,9 +922,7 @@ function hoverLeaveHandler(){
   if(!this.isVisible()) return;
 
   if(this.clickOn)
-    this.callOnNeighbours(1, function(){
-      this.reset();
-    });
+    clearInterval(broadcastIntervalTimer);
 
   this.unlockColor().reset();
   this.clickOn = false;
