@@ -336,7 +336,7 @@ function startPage3(){
 
   //Bubble from bottom to top
   bubbleArray = bubbleArray || new Array(circleMatrix.length);
-  page3IntervalTimer = setInterval(bubbleToTop, 500);
+  page3IntervalTimer = setInterval(bubbleToTop, 250);
 };
 
 function startPage4(){
@@ -501,11 +501,11 @@ function bubbleToTop(){
       else
         nextBubble = circleMatrix[x][currentBubble.matrixYIndex - 1];
 
-      currentBubble.reset(2000, null, null, 0.5);
+      currentBubble.reset(1400, null, null, 0.5);
     }
 
     if(typeof nextBubble != 'undefined'){
-      nextBubble.scale(1.5, 700).colorOn();
+      nextBubble.scale(1.5, 1400).colorOn();
 
       if(0 == nextBubble.matrixYIndex  || typeof circleMatrix[x][nextBubble.matrixYIndex] == 'undefined' || !circleMatrix[x][nextBubble.matrixYIndex].isVisible())
         nextBubble.sendBroadcast(nextBubble.currentOuterRadius(), boxWidth + nextBubble.currentOuterRadius(), 0.7);
