@@ -279,7 +279,7 @@ Circle.prototype.move = function(x, y,  moveTime, callback, easing, delay){
     this.svgSet.stop(this.moveAnimation);
   }
 
-  this.moveAnimation = Raphael.animation({'cx': x, 'cy': y}, moveTime, easing, callback);
+  this.moveAnimation = Raphael.animation({'cx': x, 'cy': y, 'x': x, 'y': y}, moveTime, easing, callback);
 
   if(delay != null)
     this.svgSet.animate(this.moveAnimation.delay(delay));
@@ -353,24 +353,33 @@ Circle.prototype.vibrateOff = function(){
 };
 
 Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
-  if(strengthPerPixel < 10)
-    return;
   var xDistance = this.x - circle.x;
   var yDistance = this.y - circle.y;
-  var newXDistance = xDistance + strengthPerPixel * (xDistance == 0 ? 0 : yDistance == 0 ? 1 : 0.70710678119) * (xDistance == 0 ? 0 : xDistance / Math.abs(xDistance));
-  var newYDistance = yDistance + strengthPerPixel * (yDistance == 0 ? 0 : xDistance == 0 ? 1 : 0.70710678119) * (yDistance == 0 ? 0 : yDistance / Math.abs(yDistance));
+  var absXDistance = Math.abs(xDistance);
+  var absYDistance = Math.abs(yDistance);
 
-  var newXCoor = circle.x + newXDistance;
-  var newYCoor = circle.y + newYDistance;
+  var angle = Math.abs(xDistance == 0 ? Math.PI/2 : Math.atan(yDistance/xDistance));
+  var xChange = Math.cos(angle) *  (strengthPerPixel / (xDistance == 0 ? 1 : absXDistance));
+  var yChange = Math.sin(angle) *  (strengthPerPixel / (yDistance == 0 ? 1 : absYDistance));
+
+  if(xChange < 5 && yChange < 5)
+    return;
+
+  var newXCoor = circle.x + xDistance + xChange * (xDistance == 0 ? 0 : xDistance / absXDistance);
+  var newYCoor = circle.y + yDistance + yChange * (yDistance == 0 ? 0 : yDistance / absYDistance);
+
+  var currentIndexDistance = Math.max(Math.abs(circle.matrixYIndex - this.matrixYIndex), Math.abs(circle.matrixXIndex - this.matrixXIndex));
 
   var that = this;
-  this.move(newXCoor, newYCoor, 500, function()
+  this.move(newXCoor, newYCoor, 300, function()
     {
-      that.move(null, null, 700);
+      that.move(null, null, 100);
       that.callOnNeighbours(1, function()
       {
         //Only call on neighbours that increase distance
-        this.pushedByCircle(circle, strengthPerPixel/2);
+        var neighbourIndexDistance = Math.max(Math.abs(circle.matrixYIndex - this.matrixYIndex), Math.abs(circle.matrixXIndex - this.matrixXIndex));
+        if(neighbourIndexDistance > currentIndexDistance)
+          this.pushedByCircle(circle, strengthPerPixel);
       });
     },
   'easeIn');

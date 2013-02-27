@@ -166,7 +166,7 @@ function loadPage1(){
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
       var circle = circleMatrix[x][y];
-      circle.move(circle.x + 36*Math.random() - 18, circle.y + 36*Math.random() - 18);
+      circle.move(circle.x + 500*Math.random() - 250, circle.y + 500*Math.random() - 250);
 
       circle.audioIndex = Math.floor(2*Math.random());
 
@@ -202,7 +202,7 @@ function loadPage1(){
 
         var moveSize = Math.sqrt(Math.pow((newMouseEvent.pageX - lastMouseEvent.pageX), 2)*Math.pow((newMouseEvent.pageY - lastMouseEvent.pageY), 2));
         var movePerTime = moveSize / (newMouseEvent.time - lastMouseEvent.time);
-        setPlaybackRate(movePerTime/3);
+        setPlaybackRate(Math.max(1,Math.round(movePerTime/5)));
 
         lastMouseEvent = newMouseEvent;
       });
@@ -827,7 +827,7 @@ function clickHandler(){
   that.clickOn = true;
 
   that.scale(0.5).startBroadcast(BROADCAST_FREQUENCY*3, null, that.currentOuterRadius() + 2*boxWidth, 0.7).colorOn().callOnNeighbours(1, function()
-  { this.pushedByCircle(that, boxWidth/3); });
+  { this.pushedByCircle(that, 25*boxWidth); });
 };
 
 function hoverEnterHandler(){
