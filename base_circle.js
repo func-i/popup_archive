@@ -377,7 +377,7 @@ Circle.prototype.pushedByCircle = function(circle, strengthPerPixelDistance, mov
   var xChange = Math.cos(angle) *  (strengthPerPixelDistance / (xDistance == 0 ? 1 : absXDistance));
   var yChange = Math.sin(angle) *  (strengthPerPixelDistance / (yDistance == 0 ? 1 : absYDistance));
 
-  if(xChange < 5 && yChange < 5)
+  if(xChange < 3 && yChange < 3)
     return;
 
   var newXCoor = circle.x + xDistance + xChange * (xDistance == 0 ? 0 : xDistance / absXDistance);

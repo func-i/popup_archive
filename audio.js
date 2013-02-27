@@ -22,13 +22,19 @@ function finishedLoadingAudio(bufferList){
     var source = audioContext.createBufferSource();
     source.buffer = bufferList[i];
     source.loop = true;
-    var volumeControl = audioContext.createGainNode();
-    source.connect(volumeControl);
-    volumeControl.connect(audioContext.destination);
 
+    var volumeControl = audioContext.createGainNode();
     volumeControl.gain.value = 0;
 
-    audioList.push({'source': source, 'volume':volumeControl});
+    var filter = audioContext.createBiquadFilter();
+    filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
+    filter.frequency.value = 800;
+
+    source.connect(volumeControl);
+    filter.connect(volumeControl);
+    volumeControl.connect(audioContext.destination);
+
+    audioList.push({'source': source, 'volume':volumeControl, 'filter': filter});
   }
 };
 
@@ -51,6 +57,19 @@ function pauseAllAudio(){
 function setPlaybackRate(rate){
   for(var i = 0; i < audioList.length; i++){
     audioList[i].source.playbackRate.value = rate;
+
+    audioList[i].source.disconnect(0);
+    audioList[i].filter.disconnect(0);
+
+    if(rate == 1){
+      audioList[i].source.connect(audioList[i].volume);
+      //audioList[i].volumne.gain.value = audioList[i].volumne.gain.value == 0 ? 0 : 1;
+    }
+    else{
+      audioList[i].source.connect(audioList[i].filter);
+      audioList[i].filter.connect(audioList[i].volume);
+//      audioList[i].volumne.gain.value = 2*audioList[i].volumne.gain.value;
+    }
   }
 };
 

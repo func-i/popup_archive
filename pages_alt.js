@@ -3,6 +3,7 @@ var boxWidth = 100;
 
 $(function(){
   init();
+  initAudio();
 
   var scrollStopTimer = null;
   $(window).scroll(function(){
@@ -52,12 +53,10 @@ function scrollStopped(){
 
   var currentPage = Math.round(-$('#pages_container').offset().left / $('.page').width()) + 1;
 
-  gotoPage(currentPage);
+  gotoPage(Math.min(currentPage, 8));
 };
 
 function init(){
-  initAudio();
-
   //Set the width of each page
   $('.page').width(window.innerWidth);
 
@@ -136,6 +135,9 @@ function gotoPage(pageNumber){
 
   var page = $('#page_' + pageNumber);
   var currentOffset = $('#pages_container').offset().left;
+  if(page.length == 0 || typeof page.offset() == 'undefined')
+    var a = 3;
+
   var pageOffset = page.offset().left;
   $('#pages_container').stop().animate({'left': currentOffset - pageOffset}, 1000, function(){});
 
@@ -168,7 +170,7 @@ function loadPage1(){
   for(var x = 0; x < circleMatrix.length; x++){
     for(var y = 0; y < circleMatrix[x].length; y++){
       var circle = circleMatrix[x][y];
-      //circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
+      circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
       circle.isRandomPosition = true;
 
       circle.audioIndex = Math.floor(2*Math.random());
@@ -219,6 +221,10 @@ function loadPage1(){
 
         var moveSize = Math.sqrt(Math.pow((newMouseEvent.pageX - lastMouseEvent.pageX), 2)*Math.pow((newMouseEvent.pageY - lastMouseEvent.pageY), 2));
         var movePerTime = moveSize / (newMouseEvent.time - lastMouseEvent.time);
+        if(movePerTime < 2)
+          setPlaybackRate(1);
+        else
+          setPlaybackRate(5);
         //setPlaybackRate(Math.max(1,Math.round(movePerTime/5)));
 
         lastMouseEvent = newMouseEvent;
