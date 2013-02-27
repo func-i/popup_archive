@@ -43,6 +43,11 @@ function pauseAudio(index){
   audioList[index].volume.gain.value = 0;
 };
 
+function pauseAllAudio(){
+  for(var i = 0; i < audioList.length; i++)
+    pauseAudio(i);
+}
+
 function setPlaybackRate(rate){
   for(var i = 0; i < audioList.length; i++){
     audioList[i].source.playbackRate.value = rate;

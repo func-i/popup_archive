@@ -146,7 +146,8 @@ function gotoPage(pageNumber){
 }
 
 function stopAll(){
-  pauseSound();
+  //pauseSound();
+  pauseAllAudio();
   clearTimeout(page2Timer);
   clearInterval(page2IntervalTimer);
   clearInterval(page3IntervalTimer);
