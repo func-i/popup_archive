@@ -844,7 +844,7 @@ function hoverLeaveHandler(){
       this.reset();
     });
 
-  this.unlockColor().reset();
+  this.unlockColor().reset(null, null, 'bounce');
   this.clickOn = false;
 };
 
