@@ -382,7 +382,7 @@ Circle.prototype.pushedByCircle = function(circle, strengthPerPixel){
           this.pushedByCircle(circle, strengthPerPixel);
       });
     },
-  'easeIn');
+  'easeOut');
 };
 
 Circle.prototype.connectNeighbourWithArc = function(neighbour, strokeColor, connectTime, callback, easing, delay){
