@@ -37,8 +37,8 @@ function initAudio(){
       filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
       filter.frequency.value = 800;
 
-      source.connect(volumeControl);
-      //filter.connect(volumeControl);
+      source.connect(filter);
+      filter.connect(volumeControl);
       volumeControl.connect(audioContext.destination);
 
       audioList[i] = {'source': source, 'volume':volumeControl, 'filter': filter};
@@ -66,7 +66,7 @@ function setPlaybackRate(rate){
   for(var i = 0; i < audioList.length; i++){
     audioList[i].source.mediaElement.playbackRate = rate;
 
-/*    audioList[i].source.disconnect(0);
+    audioList[i].source.disconnect(0);
     audioList[i].filter.disconnect(0);
 
     if(rate == 1){
@@ -77,6 +77,6 @@ function setPlaybackRate(rate){
       audioList[i].source.connect(audioList[i].filter);
       audioList[i].filter.connect(audioList[i].volume);
 //      audioList[i].volumne.gain.value = 2*audioList[i].volumne.gain.value;
-    }*/
+    }
   }
 };
