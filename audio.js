@@ -5,43 +5,52 @@ function initAudio(){
 
   audioList = [];
 
-  bufferLoader = new BufferLoader(
-    audioContext,
-    [
-      'MLKDream.ogg',
-      'sc_post.mp3'
-    ],
-    finishedLoadingAudio
-    );
+  var tmpAudioList = [];
 
-  bufferLoader.load();
-};
+  var audio = new Audio();
+  audio.src = 'MLKDream.ogg';
+  audio.controls = false;
+  audio.autoplay = true;
+  audio.loop = true;
+  document.body.appendChild(audio);
+  tmpAudioList.push(audio);
 
-function finishedLoadingAudio(bufferList){
-  for(var i = 0; i < bufferList.length; i++){
-    var source = audioContext.createBufferSource();
-    source.buffer = bufferList[i];
-    source.loop = true;
+  audio = new Audio();
+  audio.src = 'sc_post.mp3';
+  audio.controls = false;
+  audio.autoplay = true;
+  audio.loop = true;
+  document.body.appendChild(audio);
+  tmpAudioList.push(audio);
 
-    var volumeControl = audioContext.createGainNode();
-    volumeControl.gain.value = 0;
+  window.addEventListener('load', function(e){
+    for(var i = 0; i < tmpAudioList.length; i++){
+      var audio = tmpAudioList[i];
 
-    var filter = audioContext.createBiquadFilter();
-    filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
-    filter.frequency.value = 800;
+      var source = audioContext.createMediaElementSource(audio);
+      source.loop = true;
 
-    source.connect(volumeControl);
-    filter.connect(volumeControl);
-    volumeControl.connect(audioContext.destination);
+      var volumeControl = audioContext.createGainNode();
+      volumeControl.gain.value = 0;
 
-    audioList.push({'source': source, 'volume':volumeControl, 'filter': filter});
-  }
+      var filter = audioContext.createBiquadFilter();
+      filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
+      filter.frequency.value = 800;
+
+      source.connect(volumeControl);
+      //filter.connect(volumeControl);
+      volumeControl.connect(audioContext.destination);
+
+      audioList[i] = {'source': source, 'volume':volumeControl, 'filter': filter};
+    }
+    console.log('loaded');
+  });
+
 };
 
 function playAudio(index){
   if(index >= audioList.length) return;
   audioList[index].volume.gain.value = 1;
-  audioList[index].source.noteOn(0);
 };
 
 function pauseAudio(index){
@@ -52,13 +61,13 @@ function pauseAudio(index){
 function pauseAllAudio(){
   for(var i = 0; i < audioList.length; i++)
     pauseAudio(i);
-}
+};
 
 function setPlaybackRate(rate){
   for(var i = 0; i < audioList.length; i++){
-    audioList[i].source.playbackRate.value = rate;
+    audioList[i].source.mediaElement.playbackRate = rate;
 
-    audioList[i].source.disconnect(0);
+/*    audioList[i].source.disconnect(0);
     audioList[i].filter.disconnect(0);
 
     if(rate == 1){
@@ -69,7 +78,7 @@ function setPlaybackRate(rate){
       audioList[i].source.connect(audioList[i].filter);
       audioList[i].filter.connect(audioList[i].volume);
 //      audioList[i].volumne.gain.value = 2*audioList[i].volumne.gain.value;
-    }
+    }*/
   }
 };
 

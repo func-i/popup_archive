@@ -222,8 +222,8 @@ function loadPage1(){
         if(movePerTime < 2)
           setPlaybackRate(1);
         else
-          setPlaybackRate(5);
-        //setPlaybackRate(Math.max(1,Math.round(movePerTime/5)));
+          setPlaybackRate(3);
+//          setPlaybackRate(Math.max(1,Math.round(movePerTime/5)));
 
         lastMouseEvent = newMouseEvent;
       });
