@@ -201,7 +201,6 @@ function loadPage1(){
 
   var lastMouseEvent;
   var wasTriggered = true;
-  console.log('hello');
   setInterval(function()
   {
     if(wasTriggered){
