@@ -497,19 +497,26 @@ Circle.prototype.hasConnectedPaths = function(){
 };
 
 Circle.prototype.setBlur = function(blurSize, blurTime){
+  if(this.blurIntervalTimer){
+    clearInterval(this.blurIntervalTimer);
+    this.blurIntervalTimer = null;
+  }
+
   if(blurTime != null){
     var currentBlur = 0;
     var blurPerMillisecond = blurSize / blurTime;
 
     var that = this;
-    var blurIntervalTimer = setInterval(function(){
+    this.blurIntervalTimer = setInterval(function(){
       currentBlur = currentBlur + blurPerMillisecond*200;
 
       that.innerCircle.blur(currentBlur);
       that.outerCircle.blur(currentBlur);
 
-      if(currentBlur >= blurSize)
-        clearInterval(blurIntervalTimer);
+      if(currentBlur >= blurSize){
+        clearInterval(that.blurIntervalTimer);
+        that.blurIntervalTimer = null;
+      }
     }, 200)
   }
   else{
