@@ -812,7 +812,10 @@ function connectRandomCircle(){
     lastConnectedCircle.move().lockPosition().lockColor().colorOn();
   }
 
-  var newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+  var newConnectedCircle;
+  do{
+    newConnectedCircle = getRandomVisibleCircle(rightPositionOfContentInBoxes, 0, circleMatrix.length - rightPositionOfContentInBoxes, circleMatrix[0].length);
+  } while(newConnectedCircle.hasConnectedPaths())
 
   var path = lastConnectedCircle.connectNeighbourWithArc(newConnectedCircle, null, null, function(){
     newConnectedCircle.move().lockPosition().lockColor().colorOn(CONNECT_TIME);
