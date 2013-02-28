@@ -14,6 +14,7 @@ Circle.prototype.init = function(){
   this.setBaseOuterRadius();
 
   this.colorLockCounter = 0;
+  this.positionLockCounter = 0;
 
   this.draw();
   this.show();
@@ -214,8 +215,11 @@ Circle.prototype.colorOff = function(colorTime, callback, easing, delay){
   callback = callback != null ? callback.bind(this) : null;
 
 
-  if(this.colorLockCounter > 0)
+  if(this.colorLockCounter > 0){
+    if(typeof callback == 'function')
+      callback.call(this);
     return this;
+  }
 
   if(this.colorAnimations){
     this.innerCircle.stop(this.colorAnimations[0]);
@@ -272,6 +276,16 @@ Circle.prototype.setOpacity = function(opacity, opacityTime, callback, easing, d
   return this;
 };
 
+Circle.prototype.lockPosition = function(){
+  this.positionLockCounter++;
+  return this;
+};
+
+Circle.prototype.unlockPosition = function(){
+  this.positionLockCounter = Math.max(0, this.positionLockCounter - 1);
+  return this;
+};
+
 Circle.prototype.move = function(x, y,  moveTime, callback, easing, delay){
   if(typeof this.innerCircle == 'undefined' || typeof this.outerCircle == 'undefined')
     return this;
@@ -283,6 +297,11 @@ Circle.prototype.move = function(x, y,  moveTime, callback, easing, delay){
   delay = delay != null  ? delay : null;
   callback = callback != null ? callback.bind(this) : null;
 
+  if(this.positionLockCounter > 0){
+    if(typeof callback == 'function')
+      callback.call(this);
+    return this;
+  }
 
   if(this.moveAnimation){
     this.svgSet.stop(this.moveAnimation);
