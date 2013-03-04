@@ -313,7 +313,7 @@ function loadPage7(){
       else if(x == rightPositionOfContentInBoxes)
         circleMatrix[x][y].hide();
       else{
-        circleMatrix[x][y].setInnerColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);;
+        circleMatrix[x][y].setInnerColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);
         circleMatrix[x][y].setOuterColor(BLUE_COLORS[Math.floor(BLUE_COLORS.length  * Math.random())]);
         circleMatrix[x][y].colorOff();
       }
@@ -480,7 +480,7 @@ function resetPage5(){
   }
 };
 
-var swappedInnerRadiuses;
+//var swappedInnerRadiuses;
 var page6IntervalTimer;
 function startPage6(){
   stopAll();
@@ -489,9 +489,7 @@ function startPage6(){
 
   resetPage6();
 
-  swapRandomInnerRadiuses();
-
-  page6IntervalTimer = setTimeout(returnSwappedRadiuses, 5000);
+  page6IntervalTimer = setInterval(lightupCircles, 2250);
 };
 
 var page7IntervalTimer;
@@ -606,90 +604,30 @@ function colorColumn(){
   }
 };
 
-function returnSwappedRadiuses(){
-  if(swappedInnerRadiuses.length == 0) return;
+function lightupCircles(){
+  circleMatrix = circleMatrices[5];
 
-  var randomIndex = Math.floor(swappedInnerRadiuses.length*Math.random());
-  var swappedRadiuses = swappedInnerRadiuses[randomIndex];
+  //three random circles
+  var circle1 = getRandomVisibleCircle(0, 0, Math.floor(circleMatrix.length/3), circleMatrix[0].length);
 
-  var circle1 = swappedRadiuses[0];
-  var circle2 = swappedRadiuses[1];
+  var x = Math.floor(circleMatrix.length/3);
+  var circle2 = getRandomVisibleCircle(x, 0, Math.floor(circleMatrix.length/3), circleMatrix[x].length);
 
-  var circle1Radius = circle1.innerCircleRadius;
-  var circle2Radius = circle2.innerCircleRadius;
+  x = 2*Math.floor(circleMatrix.length/3);
+  var circle3 = getRandomVisibleCircle(x, 0, circleMatrix.length - x, circleMatrix[x].length);
 
-  var circle1Fill = circle1.innerCircleColor;
-  var circle2Fill = circle2.innerCircleColor;
-
-  circle1.lockColor().colorOn();
-  circle2.lockColor().colorOn();
-
-  circle1.innerCircle.animate({opacity: 0}, 2000, function(){
-    circle1.setBaseInnerRadius(circle2Radius).setInnerColor(circle2Fill);
-
-    var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
-      circle1.unlockColor().colorOff(1500);
-    });
-
-    circle1.innerCircle.animate(swapAnim.delay(2000));
+  var color = COLORS[Math.floor(COLORS.length  * Math.random())];
+  circle1.setInnerColor(color).setOuterColor(color).lockColor().colorOn(250, function(){
+    circle1.unlockColor().colorOff(2000);
   });
+  circle2.setInnerColor(color).setOuterColor(color).lockColor().colorOn(250, function(){
+    circle2.unlockColor().colorOff(2000);
+  })
+  circle3.setInnerColor(color).setOuterColor(color).lockColor().colorOn(250, function(){
+    circle3.unlockColor().colorOff(2000);
+  })
 
-  circle2.innerCircle.animate({opacity: 0}, 2000, function(){
-    circle2.setBaseInnerRadius(circle1Radius).setInnerColor(circle1Fill);
-
-    var swapAnim = Raphael.animation({opacity: 1}, 1000, function(){
-      circle2.unlockColor().colorOff(1500);
-    });
-
-    circle2.innerCircle.animate(swapAnim.delay(2000));
-  });
-
-  swappedInnerRadiuses.splice(randomIndex, 1);
-
-  page6IntervalTimer = setTimeout(returnSwappedRadiuses, 7000);
 }
-
-function swapRandomInnerRadiuses(){
-  swappedInnerRadiuses = [];
-
-  var height = circleMatrix[0].length;
-  var firstSectionStart = 0;
-  var firstSectionWidth = Math.floor(circleMatrix.length/3);
-  var secondSectionStart = Math.floor(circleMatrix.length/3);
-  var secondSectionWidth = Math.floor(circleMatrix.length/3);
-  var thirdSectionStart = 2*Math.floor(circleMatrix.length/3);
-  var thirdSectionWidth = circleMatrix.length - 2*Math.floor(circleMatrix.length/3);
-  //Swap 1st and 2nd section
-  for(var i = 0; i < 2; i++){
-    var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
-    var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
-    if(firstSectionRandomCircle == null || secondSectionRandomCircle == null)
-      continue;
-    firstSectionRandomCircle.setBaseInnerRadius(25);
-    secondSectionRandomCircle.setBaseInnerRadius(10);
-    swappedInnerRadiuses.push([firstSectionRandomCircle, secondSectionRandomCircle]);
-  }
-  //Swap 1st and 3rd section
-  for(var i = 0; i < 2; i++){
-    var firstSectionRandomCircle = getVisibleUnSwappedRandomCircle(firstSectionStart, 0, firstSectionWidth, height, 10);
-    var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
-    if(firstSectionRandomCircle == null || thirdSectionRandomCircle == null)
-      continue;
-    firstSectionRandomCircle.setBaseInnerRadius(17);
-    thirdSectionRandomCircle.setBaseInnerRadius(10);
-    swappedInnerRadiuses.push([firstSectionRandomCircle, thirdSectionRandomCircle]);
-  }
-  //Swap 1st and 3rd section
-  for(var i = 0; i < 2; i++){
-    var secondSectionRandomCircle = getVisibleUnSwappedRandomCircle(secondSectionStart, 0, secondSectionWidth, height, 25);
-    var thirdSectionRandomCircle = getVisibleUnSwappedRandomCircle(thirdSectionStart, 0, thirdSectionWidth, height, 17);
-    if(secondSectionRandomCircle == null || thirdSectionRandomCircle == null)
-      continue;
-    secondSectionRandomCircle.setBaseInnerRadius(17);
-    thirdSectionRandomCircle.setBaseInnerRadius(25);
-    swappedInnerRadiuses.push([secondSectionRandomCircle, thirdSectionRandomCircle]);
-  }
-};
 
 function swapCircles(){
   var contentEl = $('#page_7 .content');
@@ -878,20 +816,6 @@ function getRandomVisibleCircle(xOffset, yOffset, width, height){
   return null;
 };
 
-function getVisibleUnSwappedRandomCircle(xOffset, yOffset, width, height, unSwappedRadius){
-  var count = 50;
-  while(count > 0){
-    var randomCircle = getRandomCircle(xOffset, yOffset, width, height);
-
-    if(randomCircle != null && typeof randomCircle != 'undefined' && randomCircle.isVisible() && randomCircle.innerCircleRadius == unSwappedRadius)
-      return randomCircle;
-
-    count--;
-  }
-
-  return null;
-};
-
 
 function getLeftPositionOfContentInBoxes(pageNumber){
   return Math.floor(($('#page_' + pageNumber + ' .content').offset().left - $('#page_' + pageNumber).offset().left) / boxWidth);
@@ -911,11 +835,11 @@ function clickHandler(){
   if(broadcastIntervalTimer)
     clearInterval(broadcastIntervalTimer);
 
-  that.sendBroadcast(null, that.currentOuterRadius() + 6*boxWidth, 0.7, null, null, 800).callOnNeighbours(1, function(){startWave(that, this);});
+  that.callOnNeighbours(1, function(){startWave(that, this);});
 
   broadcastIntervalTimer = setInterval(function()
   {
-    that.sendBroadcast(null, that.currentOuterRadius() + 6*boxWidth, 0.7, null, null, 800).callOnNeighbours(1, function(){startWave(that, this);});
+    that.callOnNeighbours(1, function(){startWave(that, this);});
   }, 2000);
 };
 
