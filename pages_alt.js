@@ -31,7 +31,7 @@ $(function(){
   });
 
   $('.internal-link').click(function(){
-    var pageNumber = this.href.split('#').pop();
+    var pageNumber = parseInt(this.href.split('#').pop(),10);
     isMovingCauseOfTimer = true;
     gotoPage(pageNumber);
   });
@@ -175,7 +175,7 @@ function loadPage1(){
       circle.move(circle.x + 150*Math.random() - 75, circle.y + 150*Math.random() - 75);
       circle.isRandomPosition = true;
 
-      circle.audioIndex = Math.floor(2*Math.random());
+      circle.audioIndex = Math.floor(AUDIO_SOURCES.length*Math.random());
 
       circle.setHoverHandler(function(){
         hoverEnterHandler.call(this);

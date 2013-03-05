@@ -7,21 +7,16 @@ function initAudio(){
 
   var tmpAudioList = [];
 
-  var audio = new Audio();
-  audio.src = 'MLKDream.ogg';
-  audio.controls = false;
-  audio.autoplay = true;
-  audio.loop = true;
-  document.body.appendChild(audio);
-  tmpAudioList.push(audio);
-
-  audio = new Audio();
-  audio.src = 'sc_post.mp3';
-  audio.controls = false;
-  audio.autoplay = true;
-  audio.loop = true;
-  document.body.appendChild(audio);
-  tmpAudioList.push(audio);
+  for(var i = 0; i < AUDIO_SOURCES.length; i++)
+  {
+    var audio = new Audio();
+    audio.src = AUDIO_SOURCES[i];
+    audio.controls = false;
+    audio.autoplay = true;
+    audio.loop = true;
+    document.body.appendChild(audio);
+    tmpAudioList.push(audio);
+  }
 
   window.addEventListener('load', function(e){
     for(var i = 0; i < tmpAudioList.length; i++){
