@@ -30,7 +30,8 @@ function initAudio(){
 
       var filter = audioContext.createBiquadFilter();
       filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
-      filter.frequency.value = 800;
+      //filter.frequency.value = 800;
+      filter.frequency.value = 20000;
 
       source.connect(filter);
       filter.connect(volumeControl);

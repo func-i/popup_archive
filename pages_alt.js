@@ -442,7 +442,7 @@ function startPage4(){
       this.hide(5000);
     });
 
-  if(Math.abs(circle1.matrixXIndex - circle2.matrixXIndex) > 1 && Math.abs(circle1.matrixYIndex - circle2.matrixYIndex) <= 1)
+  if(Math.abs(circle1.matrixXIndex - circle2.matrixXIndex) > 1 && Math.abs(circle1.matrixYIndex - circle2.matrixYIndex) > 1)
     circle2.removeClickHandler().removeHoverHandler().scale(5.5, 5000).lockColor().colorOn(5000).startBroadcast(1000, null, null, 0.7).callOnNeighbours(1, function(){ this.hide(5000); }
     );
 };
