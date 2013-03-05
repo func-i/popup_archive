@@ -10,7 +10,7 @@
       body{
         background: #F2EFEF;
         height: 10000px;
-        color: #7c7b81;
+        color: #ffb959;
         margin-left: 10px;
         margin-right: 10px;
       }
@@ -62,13 +62,25 @@
         margin-right: auto;
         width: 840px;
         position: relative;
-        z-index: 1;
       }
       .page .content{
         margin-left: 10px;
         margin-right: 10px;
         width: 450px;
-        color: #AD4278;
+        color: #ff974d;
+      }
+      .page .content h1{
+        font-size: 26px;
+        font-weight: bold;
+      }
+      .page .content{
+        font-size: 24px;
+      }
+      .page .content a, .page .content a:hover, .page .content a:visited{
+        color: #b85d37;
+        text-decoration: none;
+        position: relative;
+        z-index: 10;
       }
     </style>
 
@@ -76,14 +88,14 @@
   <body>
     <div id="fixed_holder">
       <header>
-        <a href="#" data-page="1">Page 1</a>
-        <a href="#" data-page="2">Page 2</a>
-        <a href="#" data-page="3">Page 3</a>
-        <a href="#" data-page="4">Page 4</a>
-        <a href="#" data-page="5">Page 5</a>
-        <a href="#" data-page="6">Page 6</a>
-        <a href="#" data-page="7">Page 7</a>
-        <a href="#" data-page="8">Page 8</a>
+        <a href="#1" class="internal-link">Page 1</a>
+        <a href="#2" class="internal-link">Page 2</a>
+        <a href="#3" class="internal-link">Page 3</a>
+        <a href="#4" class="internal-link">Page 4</a>
+        <a href="#5" class="internal-link">Page 5</a>
+        <a href="#6" class="internal-link">Page 6</a>
+        <a href="#7" class="internal-link">Page 7</a>
+        <a href="#8" class="internal-link">Page 8</a>
       </header>
 
     <div id="pages_viewer">
@@ -91,6 +103,14 @@
         <div class="svg"></div>
 
         <div class="page" id="page_1">
+          <div class="content-holder">
+            <div class="content">
+              <p>
+                Pop Up Archive is a lightweight archive system that enables low cost, high value collaboration between disparate media communities.
+                <a href="#2" class="internal-link">Learn More...</a>
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="page" id="page_2">
